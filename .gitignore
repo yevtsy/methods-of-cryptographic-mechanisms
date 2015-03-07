@@ -3,6 +3,10 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# Ignore Intellij Idea IDE specific files:
+.idea/
+*.iml
+
 # Package Files #
 *.jar
 *.war
