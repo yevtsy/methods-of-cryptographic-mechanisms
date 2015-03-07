@@ -25,7 +25,7 @@ public class LargeTest {
     }
 
     @Test
-    public void testAdd() throws Exception {
+    public void testAddPositive() throws Exception {
         Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
         Large y = new Large("2934097831972391728347612783641927841983569834695");
 
@@ -33,8 +33,20 @@ public class LargeTest {
     }
 
     @Test
+    public void testAddNegative() throws Exception {
+        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
+        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+
+        assertEquals("-9234013274012419839352732815431939417474052600905405999820023013349", x.add(y).toString());
+    }
+
+    @Test
     public void testSubtract() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        // TODO yevhen.tsyba: bring back to life the test
+        Large x = new Large("1000");
+        Large y = new Large("999");
+
+        assertEquals("1", x.subtract(y).toString());
     }
 
     @Test
@@ -58,8 +70,51 @@ public class LargeTest {
     }
 
     @Test
-    public void testCompareTo() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public void testCompareToPositiveTrue() throws Exception {
+        Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
+        Large y = new Large("2934097831972391728347612783641927841983569834695");
+
+        assertEquals(1, x.compareTo(y));
+    }
+
+    @Test
+         public void testCompareToPositiveFalse() throws Exception {
+        Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
+        Large y = new Large("2934097831972391728347612783641927841983569834695");
+
+        assertEquals(-1, y.compareTo(x));
+    }
+
+    @Test
+    public void testCompareToNegativeTrue() throws Exception {
+        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
+        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+
+        assertEquals(1, y.compareTo(x));
+    }
+
+    @Test
+    public void testCompareToNegativeFalse() throws Exception {
+        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
+        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+
+        assertEquals(-1, x.compareTo(y));
+    }
+
+    @Test
+    public void testCompareToEqualsPositive() throws Exception {
+        Large x = new Large("2934097831972391728347612783641927841983569834695");
+        Large y = new Large("2934097831972391728347612783641927841983569834695");
+
+        assertEquals(0, x.compareTo(y));
+    }
+
+    @Test
+    public void testCompareToEqualsNegative() throws Exception {
+        Large x = new Large("-2934097831972391728347612783641927841983569834695");
+        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+
+        assertEquals(0, x.compareTo(y));
     }
 
     @Test

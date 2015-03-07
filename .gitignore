@@ -6,6 +6,7 @@
 # Ignore Intellij Idea IDE specific files:
 .idea/
 *.iml
+target/
 
 # Package Files #
 *.jar

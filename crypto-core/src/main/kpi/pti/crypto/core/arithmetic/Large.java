@@ -1,5 +1,7 @@
 package kpi.pti.crypto.core.arithmetic;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.ArrayList;
 
 /**
@@ -16,9 +18,9 @@ public class Large implements Comparable<Large> {
 
     /**
      * Every number could be represented as:
-     *  <i>x = a<sub>n</sub> * BASE<sup>n</sup> + a<sub>n-1</sub> * BASE<sup>n-1</sup> + ... +
-     *      a<sub>1</sub> * BASE + a<sub>0</sub></i>,
-     *  where <i>a<sub>i</sub> &isin {0..BASE}</i>, <i>i = n..0</i>
+     * <i>x = a<sub>n</sub> * BASE<sup>n</sup> + a<sub>n-1</sub> * BASE<sup>n-1</sup> + ... +
+     * a<sub>1</sub> * BASE + a<sub>0</sub></i>,
+     * where <i>a<sub>i</sub> &isin {0..BASE}</i>, <i>i = n..0</i>
      */
     private ArrayList<Integer> a;
 
@@ -37,7 +39,7 @@ public class Large implements Comparable<Large> {
 
         // case x = 0
         if (x.equals("0")) {
-            a = new ArrayList<Integer>();
+            a = new ArrayList<>();
             a.add(0);
             return;
         }
@@ -49,10 +51,19 @@ public class Large implements Comparable<Large> {
         }
 
         // fill the coefficients
-        a = new ArrayList<Integer>(x.length());
-        for (int i = x.length()-1; i > -1; i--) {
+        a = new ArrayList<>(x.length());
+        for (int i = x.length() - 1; i > -1; i--) {
             a.add(Character.getNumericValue(x.charAt(i)));
         }
+    }
+
+    /**
+     * Get ArrayList as inner representation of number items.
+     *
+     * @return new ArrayList object to provide immutability
+     */
+    public ArrayList<Integer> getInternalItems() {
+        return new ArrayList<>(a);
     }
 
 
@@ -70,10 +81,9 @@ public class Large implements Comparable<Large> {
     /**
      * Returns the signum function of a large number.
      *
-     * @return
-     *  0 if number is equal zero;
-     *  1 if number is greater than zero;
-     *  -1 if number is less than zero;
+     * @return 0 if number is equal zero;
+     * 1 if number is greater than zero;
+     * -1 if number is less than zero;
      */
     public int sign() {
         return (a.size() == 1 && a.get(0) == 0) ? 0 : isNegative ? -1 : 1;
@@ -110,16 +120,25 @@ public class Large implements Comparable<Large> {
      * @return large number decreased by value of the argument.
      */
     Large subtract(final Large x) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        switch (this.compareTo(x)) {
+            case 0:
+                return new Large("0");
+            case 1:
+                return ComputationUtils.subtractNumbers(this, x);
+            case -1:
+                return ComputationUtils.subtractNumbers(x, this);
+            default:
+                throw new IllegalArgumentException("Invalid result for compareTo operation");
+        }
     }
 
 
     /**
      * Provides multiplication operation.
-     * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      *
      * @param x a large number to be multiplied.
      * @return large number multiplied by value of the argument.
+     * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      */
     Large multiply(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
@@ -128,10 +147,10 @@ public class Large implements Comparable<Large> {
 
     /**
      * Provides division operation.
-     * @see <a href="http://en.wikipedia.org/wiki/Division_algorithm">Division algorithm</a>
      *
      * @param x a large number to be divided.
      * @return large number divided by value of the argument.
+     * @see <a href="http://en.wikipedia.org/wiki/Division_algorithm">Division algorithm</a>
      */
     Large divide(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
@@ -140,10 +159,10 @@ public class Large implements Comparable<Large> {
 
     /**
      * Provides modulo operation.
-     * @see <a href="http://en.wikipedia.org/wiki/Barrett_reduction">Barrett reduction algorithm</a>
      *
      * @param n a modulo value.
      * @return large number modulo by the argument.
+     * @see <a href="http://en.wikipedia.org/wiki/Barrett_reduction">Barrett reduction algorithm</a>
      */
     Large modulo(final Large n) {
         throw new UnsupportedOperationException("Not implemented yet.");
@@ -152,23 +171,23 @@ public class Large implements Comparable<Large> {
 
     /**
      * Provides power operation.
-     * @see <a href="http://en.wikipedia.org/wiki/Exponentiation_by_squaring#2k-ary_method">2<sup>k</sup>-ary method</a>
      *
      * @param x a power value.
      * @return large number powered to value of the argument.
+     * @see <a href="http://en.wikipedia.org/wiki/Exponentiation_by_squaring#2k-ary_method">2<sup>k</sup>-ary method</a>
      */
-    Large power(final Large x){
+    Large power(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
 
     /**
      * Provides power operation by modulo.
-     * @see <a href="http://en.wikipedia.org/wiki/Modular_exponentiation">Modular exponentiation methods</a>
      *
      * @param x a power value.
      * @param n a modulo value.
      * @return large number powered to value of the argument by modulo.
+     * @see <a href="http://en.wikipedia.org/wiki/Modular_exponentiation">Modular exponentiation methods</a>
      */
     Large power(final Large x, final Large n) {
         throw new UnsupportedOperationException("Not implemented yet.");
@@ -176,7 +195,40 @@ public class Large implements Comparable<Large> {
 
     @Override
     public int compareTo(final Large o) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        // compare numbers by signs
+        if (!this.isNegative && o.isNegative) {
+            return 1;
+        } else if (this.isNegative && !o.isNegative) {
+            return -1;
+        }
+
+        // check numbers for equality
+        if (this.isNegative == o.isNegative && CollectionUtils.isEqualCollection(this.a, o.a)) {
+            return 0;
+        }
+
+        // compare numbers by their sizes and signs
+        if (this.a.size() > o.a.size() && !this.isNegative && !o.isNegative) {
+            return 1;
+        } else if (this.a.size() > o.a.size() && this.isNegative && o.isNegative) {
+            return -1;
+        }
+
+        if (this.a.size() < o.a.size() && !this.isNegative && !o.isNegative) {
+            return -1;
+        } else if (this.a.size() < o.a.size() && this.isNegative && o.isNegative) {
+            return 1;
+        }
+
+        // compare numbers by items in case sizes and signs are equal
+        for (int i = 0; i < this.a.size(); ++i) {
+            if (this.a.get(i) > o.a.get(i)) {
+                return 1;
+            } else if (this.a.get(i) < o.a.get(i)) {
+                return -1;
+            }
+        }
+        return 0;
     }
 
 
@@ -192,7 +244,7 @@ public class Large implements Comparable<Large> {
         StringBuilder s = new StringBuilder();
         if (isNegative) s.append("-");
 
-        for (int i = a.size()-1; i >= 0; i--) {
+        for (int i = a.size() - 1; i >= 0; i--) {
             s.append(a.get(i));
         }
 
@@ -206,19 +258,18 @@ public class Large implements Comparable<Large> {
         if (isNegative) s.append("-(");
 
         int x;
-        for (int i = a.size()-1; i >= 0; i--) {
+        for (int i = a.size() - 1; i >= 0; i--) {
             x = a.get(i);
-            if (x != 0)
-            {
+            if (x != 0) {
                 s.append(x)
                         .append("*")
-                    .append(BASE)
-                    .append('^')
-                    .append(i)
-                    .append(" + ");
+                        .append(BASE)
+                        .append('^')
+                        .append(i)
+                        .append(" + ");
             }
         }
-        s.delete(s.length()-3, s.length());
+        s.delete(s.length() - 3, s.length());
         if (isNegative) s.append(")");
 
         return s.toString();
