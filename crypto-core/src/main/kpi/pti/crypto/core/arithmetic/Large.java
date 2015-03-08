@@ -1,13 +1,10 @@
 package kpi.pti.crypto.core.arithmetic;
 
-import org.apache.commons.collections4.CollectionUtils;
-
-import java.util.ArrayList;
-
 /**
  * Implementation of arbitrary-precision arithmetic operations on large integer numbers.
  *
  * @author vadym
+ * @author yevhen.tsyba
  * @since 07.03.15.
  */
 public class Large implements Comparable<Large> {
@@ -22,7 +19,7 @@ public class Large implements Comparable<Large> {
      * a<sub>1</sub> * BASE + a<sub>0</sub></i>,
      * where <i>a<sub>i</sub> &isin {0..BASE}</i>, <i>i = n..0</i>
      */
-    private ArrayList<Integer> a;
+    private ExtendedArrayList<Integer> a;
 
     /**
      * Stores a sign of number
@@ -39,7 +36,7 @@ public class Large implements Comparable<Large> {
 
         // case x = 0
         if (x.equals("0")) {
-            a = new ArrayList<>();
+            a = new ExtendedArrayList<>();
             a.add(0);
             return;
         }
@@ -51,19 +48,10 @@ public class Large implements Comparable<Large> {
         }
 
         // fill the coefficients
-        a = new ArrayList<>(x.length());
+        a = new ExtendedArrayList<>(x.length());
         for (int i = x.length() - 1; i > -1; i--) {
             a.add(Character.getNumericValue(x.charAt(i)));
         }
-    }
-
-    /**
-     * Get ArrayList as inner representation of number items.
-     *
-     * @return new ArrayList object to provide immutability
-     */
-    public ArrayList<Integer> getInternalItems() {
-        return new ArrayList<>(a);
     }
 
 
@@ -96,17 +84,17 @@ public class Large implements Comparable<Large> {
      * @param x a large number to be added.
      * @return large number increased by value of the argument.
      */
-    Large add(final Large x) {
+    public Large add(final Large x) {
         int n = Math.max(a.size(), x.a.size());
 
         int carry = 0;
         int sum;
 
         for (int i = 0; i < n; i++) {
-            sum = get(i) + x.get(i) + carry;
+            sum = a.get(i, 0) + x.a.get(i, 0) + carry;
             carry = sum / BASE;
 
-            set(i, sum % BASE);
+            a.set(i, sum % BASE, 0);
         }
 
         return this;
@@ -119,17 +107,18 @@ public class Large implements Comparable<Large> {
      * @param x a large number to be subtracted.
      * @return large number decreased by value of the argument.
      */
-    Large subtract(final Large x) {
+    public Large subtract(final Large x) {
         int carry = 0;
-
         int diff;
-        for (int i = 0; i < this.a.size(); ++i){
-            diff = get(i) - x.get(i) + carry;
+
+        for (int i = 0; i < a.size(); ++i) {
+            diff = a.get(i, 0) - x.a.get(i, 0) + carry;
             carry = diff >= 0 ? 0 : -1;
 
-            set(i, (diff + BASE) % BASE);
+            a.set(i, (diff + BASE) % BASE);
         }
 
+        a.trim(0);
         return this;
     }
 
@@ -141,7 +130,7 @@ public class Large implements Comparable<Large> {
      * @return large number multiplied by value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      */
-    Large multiply(final Large x) {
+    public Large multiply(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -153,7 +142,7 @@ public class Large implements Comparable<Large> {
      * @return large number divided by value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Division_algorithm">Division algorithm</a>
      */
-    Large divide(final Large x) {
+    public Large divide(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -165,7 +154,7 @@ public class Large implements Comparable<Large> {
      * @return large number modulo by the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Barrett_reduction">Barrett reduction algorithm</a>
      */
-    Large modulo(final Large n) {
+    public Large modulo(final Large n) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -177,7 +166,7 @@ public class Large implements Comparable<Large> {
      * @return large number powered to value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Exponentiation_by_squaring#2k-ary_method">2<sup>k</sup>-ary method</a>
      */
-    Large power(final Large x) {
+    public Large power(final Large x) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -190,9 +179,10 @@ public class Large implements Comparable<Large> {
      * @return large number powered to value of the argument by modulo.
      * @see <a href="http://en.wikipedia.org/wiki/Modular_exponentiation">Modular exponentiation methods</a>
      */
-    Large power(final Large x, final Large n) {
+    public Large power(final Large x, final Large n) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
+
 
     @Override
     public int compareTo(final Large o) {
@@ -204,7 +194,7 @@ public class Large implements Comparable<Large> {
         }
 
         // check numbers for equality
-        if (this.isNegative == o.isNegative && this.a.equals(o.a)) {
+        if (this.a.equals(o.a)) {
             return 0;
         }
 
@@ -277,16 +267,5 @@ public class Large implements Comparable<Large> {
         if (isNegative) s.append(")");
 
         return s.toString();
-    }
-
-    private int get(final int index) {
-        return (index >= 0 && index < a.size()) ? a.get(index) : 0;
-    }
-
-    private void set(final int index, final int value) {
-        if (index >= 0 && index < a.size()) {
-            a.set(index, value);
-        } else
-            a.add(value);
     }
 }
