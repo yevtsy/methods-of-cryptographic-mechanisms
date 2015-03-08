@@ -120,16 +120,17 @@ public class Large implements Comparable<Large> {
      * @return large number decreased by value of the argument.
      */
     Large subtract(final Large x) {
-        switch (this.compareTo(x)) {
-            case 0:
-                return new Large("0");
-            case 1:
-                return ComputationUtils.subtractNumbers(this, x);
-            case -1:
-                return ComputationUtils.subtractNumbers(x, this);
-            default:
-                throw new IllegalArgumentException("Invalid result for compareTo operation");
+        int carry = 0;
+
+        int diff;
+        for (int i = 0; i < this.a.size(); ++i){
+            diff = get(i) - x.get(i) + carry;
+            carry = diff >= 0 ? 0 : -1;
+
+            set(i, (diff + BASE) % BASE);
         }
+
+        return this;
     }
 
 
@@ -203,21 +204,24 @@ public class Large implements Comparable<Large> {
         }
 
         // check numbers for equality
-        if (this.isNegative == o.isNegative && CollectionUtils.isEqualCollection(this.a, o.a)) {
+        if (this.isNegative == o.isNegative && this.a.equals(o.a)) {
             return 0;
         }
 
         // compare numbers by their sizes and signs
-        if (this.a.size() > o.a.size() && !this.isNegative && !o.isNegative) {
-            return 1;
-        } else if (this.a.size() > o.a.size() && this.isNegative && o.isNegative) {
-            return -1;
+        if (this.a.size() > o.a.size()){
+            if(!this.isNegative && !o.isNegative)
+                return 1;
+            if(this.isNegative && o.isNegative){
+                return -1;
+            }
         }
 
-        if (this.a.size() < o.a.size() && !this.isNegative && !o.isNegative) {
-            return -1;
-        } else if (this.a.size() < o.a.size() && this.isNegative && o.isNegative) {
-            return 1;
+        if (this.a.size() < o.a.size()){
+            if (!this.isNegative && !o.isNegative)
+                return -1;
+            if (this.isNegative && o.isNegative)
+                return 1;
         }
 
         // compare numbers by items in case sizes and signs are equal

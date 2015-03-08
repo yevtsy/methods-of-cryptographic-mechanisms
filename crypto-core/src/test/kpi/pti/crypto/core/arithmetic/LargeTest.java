@@ -2,6 +2,8 @@ package kpi.pti.crypto.core.arithmetic;
 
 import org.junit.Test;
 
+import java.math.BigInteger;
+
 import static org.junit.Assert.assertEquals;
 
 public class LargeTest {
@@ -26,27 +28,47 @@ public class LargeTest {
 
     @Test
     public void testAddPositive() throws Exception {
-        Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("2934097831972391728347612783641927841983569834695");
+        String x_str = "9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "2934097831972391728347612783641927841983569834695";
 
-        assertEquals("9234013274012419839352732815431939417474052600905405999820023013349", x.add(y).toString());
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(x_bi.add(y_bi).toString(), x_large.add(y_large).toString());
     }
 
     @Test
     public void testAddNegative() throws Exception {
-        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+        String x_str = "-9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "-2934097831972391728347612783641927841983569834695";
 
-        assertEquals("-9234013274012419839352732815431939417474052600905405999820023013349", x.add(y).toString());
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(x_bi.add(y_bi).toString(), x_large.add(y_large).toString());
     }
 
     @Test
     public void testSubtract() throws Exception {
-        // TODO yevhen.tsyba: bring back to life the test
-        Large x = new Large("1000");
-        Large y = new Large("999");
+        String x_str = "9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "2934097831972391728347612783641927841983569834695";
 
-        assertEquals("1", x.subtract(y).toString());
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(x_bi.subtract(y_bi).toString(), x_large.subtract(y_large).toString());
     }
 
     @Test
@@ -71,50 +93,88 @@ public class LargeTest {
 
     @Test
     public void testCompareToPositiveTrue() throws Exception {
-        Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("2934097831972391728347612783641927841983569834695");
+        String x_str = "9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "2934097831972391728347612783641927841983569834695";
 
-        assertEquals(1, x.compareTo(y));
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(x_bi.compareTo(y_bi), x_large.compareTo(y_large));
     }
 
     @Test
-         public void testCompareToPositiveFalse() throws Exception {
-        Large x = new Large("9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("2934097831972391728347612783641927841983569834695");
+    public void testCompareToPositiveFalse() throws Exception {
+        String x_str = "9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "2934097831972391728347612783641927841983569834695";
 
-        assertEquals(-1, y.compareTo(x));
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(y_bi.compareTo(x_bi), y_large.compareTo(x_large));
     }
 
     @Test
     public void testCompareToNegativeTrue() throws Exception {
-        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+        String x_str = "-9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "-2934097831972391728347612783641927841983569834695";
 
-        assertEquals(1, y.compareTo(x));
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(y_bi.compareTo(x_bi), y_large.compareTo(x_large));
     }
 
     @Test
     public void testCompareToNegativeFalse() throws Exception {
-        Large x = new Large("-9234013274012419836418634983459547689126439817263478157836453178654");
-        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+        String x_str = "-9234013274012419836418634983459547689126439817263478157836453178654";
+        String y_str = "-2934097831972391728347612783641927841983569834695";
 
-        assertEquals(-1, x.compareTo(y));
+        Large x_large = new Large(x_str);
+        Large y_large = new Large(y_str);
+
+        BigInteger x_bi = new BigInteger(x_str);
+        BigInteger y_bi = new BigInteger(y_str);
+
+
+        assertEquals(x_bi.compareTo(y_bi), x_large.compareTo(y_large));
     }
 
     @Test
     public void testCompareToEqualsPositive() throws Exception {
-        Large x = new Large("2934097831972391728347612783641927841983569834695");
-        Large y = new Large("2934097831972391728347612783641927841983569834695");
+        String val = "2934097831972391728347612783641927841983569834695";
 
-        assertEquals(0, x.compareTo(y));
+        Large x = new Large(val);
+        Large y = new Large(val);
+
+        BigInteger x_bi = new BigInteger(val);
+        BigInteger y_bi = new BigInteger(val);
+
+        assertEquals(x_bi.compareTo(y_bi), x.compareTo(y));
     }
 
     @Test
     public void testCompareToEqualsNegative() throws Exception {
-        Large x = new Large("-2934097831972391728347612783641927841983569834695");
-        Large y = new Large("-2934097831972391728347612783641927841983569834695");
+        String val = "-2934097831972391728347612783641927841983569834695";
 
-        assertEquals(0, x.compareTo(y));
+        Large x = new Large(val);
+        Large y = new Large(val);
+
+        BigInteger x_bi = new BigInteger(val);
+        BigInteger y_bi = new BigInteger(val);
+
+        assertEquals(x_bi.compareTo(y_bi), x.compareTo(y));
     }
 
     @Test
