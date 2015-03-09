@@ -1,4 +1,4 @@
-package kpi.pti.crypto.showcase;
+package crypto.showcase;
 
 /**
  * @author vadym

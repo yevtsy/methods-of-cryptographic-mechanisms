@@ -4,4 +4,4 @@
  * @author vadym
  * @since 07.03.15 18:00
  */
-package kpi.pti.crypto.showcase;
+package crypto.showcase;

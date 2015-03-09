@@ -1,4 +1,6 @@
-package kpi.pti.crypto.core.arithmetic;
+package crypto.core.arithmetic;
+
+import core.arithmetic.Large;
 
 import java.math.BigInteger;
 

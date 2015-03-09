@@ -1,4 +1,6 @@
-package kpi.pti.crypto.core.arithmetic;
+package core.arithmetic;
+
+import org.apache.log4j.Logger;
 
 /**
  * Implementation of arbitrary-precision arithmetic operations on large integer numbers.
@@ -7,7 +9,13 @@ package kpi.pti.crypto.core.arithmetic;
  * @author yevhen.tsyba
  * @since 07.03.15.
  */
-public class Large implements Comparable<Large> {
+public class Large implements Comparable<Large>, Cloneable {
+
+    /**
+     * Logger
+     */
+    final static Logger log = Logger.getLogger(Large.class);
+
     /**
      * Number base.
      */
@@ -84,20 +92,22 @@ public class Large implements Comparable<Large> {
      * @param x a large number to be added.
      * @return large number increased by value of the argument.
      */
-    public Large add(final Large x) {
+    public Large add(final Large x) throws CloneNotSupportedException {
+        Large res = (Large) this.clone();
         int n = Math.max(a.size(), x.a.size());
 
         int carry = 0;
         int sum;
 
-        for (int i = 0; i < n; i++) {
-            sum = a.get(i, 0) + x.a.get(i, 0) + carry;
+        for (int i = 0; i <= n; i++) {
+            sum = res.a.get(i, 0) + x.a.get(i, 0) + carry;
             carry = sum / BASE;
 
-            a.set(i, sum % BASE, 0);
+            res.a.set(i, sum % BASE, 0);
         }
 
-        return this;
+        res.a.trim(0);
+        return res;
     }
 
 
@@ -107,19 +117,20 @@ public class Large implements Comparable<Large> {
      * @param x a large number to be subtracted.
      * @return large number decreased by value of the argument.
      */
-    public Large subtract(final Large x) {
+    public Large subtract(final Large x) throws CloneNotSupportedException {
+        Large res = (Large) this.clone();
         int carry = 0;
         int diff;
 
-        for (int i = 0; i < a.size(); ++i) {
-            diff = a.get(i, 0) - x.a.get(i, 0) + carry;
+        for (int i = 0; i < res.a.size(); ++i) {
+            diff = res.a.get(i, 0) - x.a.get(i, 0) + carry;
             carry = diff >= 0 ? 0 : -1;
 
-            a.set(i, (diff + BASE) % BASE);
+            res.a.set(i, (diff + BASE) % BASE);
         }
 
-        a.trim(0);
-        return this;
+        res.a.trim(0);
+        return res;
     }
 
 
@@ -130,8 +141,88 @@ public class Large implements Comparable<Large> {
      * @return large number multiplied by value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      */
-    public Large multiply(final Large x) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public Large multiply(final Large x) throws CloneNotSupportedException {
+        return karatsubaMultiplication(this, x);
+    }
+
+    private Large karatsubaMultiplication(final Large x, final Large y) throws CloneNotSupportedException {
+        if (isSmallNumber(x)) {
+            Large result = y.multiplyBySimpleValue(getSmallValue(x));
+            log.info("karatsuba return for values < " + x.getNonSignNumber() + " > and < " + y.getNonSignNumber() + " > result :" + result.toString());
+            return result;
+        }
+        if (isSmallNumber(y)) {
+            Large result = x.multiplyBySimpleValue(getSmallValue(y));
+            log.info("karatsuba return for values < " + x.getNonSignNumber() + " > and < " + y.getNonSignNumber() + " > result :" + result.toString());
+            return result;
+        }
+
+        int mid = Math.min(x.a.size(), y.a.size()) - 1;
+
+        Large high1 = getPartialNumber(x, 0, x.getNonSignNumber().length() - mid);
+        Large low1 = getPartialNumber(x, x.getNonSignNumber().length() - mid, x.getNonSignNumber().length());
+
+        Large high2 = getPartialNumber(y, 0, y.getNonSignNumber().length() - mid);
+        Large low2 = getPartialNumber(y, y.getNonSignNumber().length() - mid, y.getNonSignNumber().length());
+
+        Large z0 = karatsubaMultiplication(low1, low2);
+        Large z1 = karatsubaMultiplication(low1.add(high1), low2.add(high2));
+        Large z2 = karatsubaMultiplication(high1, high2);
+
+        Large result = z2.multiplyByOrder(2 * mid).add((z1.subtract(z2).subtract(z0)).multiplyByOrder(mid).add(z0));
+        log.info("karatsuba return for values < " + x.getNonSignNumber() + " > and < " + y.getNonSignNumber() + " > result :" + result.toString());
+        return result;
+    }
+
+    private boolean isSmallNumber(final Large x) {
+        return x.getNonSignNumber().length() == 1;
+    }
+
+    private Integer getSmallValue(final Large x) {
+        return Character.getNumericValue(x.getNonSignNumber().charAt(0));
+    }
+
+    private Large getPartialNumber(Large x, int startIndex, int endIndex) {
+        return new Large(x.getNonSignNumber().substring(startIndex, endIndex));
+    }
+
+    /**
+     * Simple multiplication by orders.
+     * For example, number '123' with n = 3 returns number 123000
+     *
+     * @param n number of order
+     * @return new large value multiplied by orders
+     */
+    public Large multiplyByOrder(int n) {
+        StringBuilder str = new StringBuilder(this.getNonSignNumber());
+
+        for (int i = 0; i < n; ++i) {
+            str.append("0");
+        }
+
+        return new Large(str.toString());
+    }
+
+    /**
+     * Provides multiplication large {@link core.arithmetic.Large} number by small like {@link java.lang.Integer}
+     *
+     * @param val - small number to multiply with large {@link core.arithmetic.Large}
+     * @return new large {@link core.arithmetic.Large} number
+     */
+    public Large multiplyBySimpleValue(Integer val) {
+        Large res = new Large(this.getNonSignNumber());
+        int carry = 0;
+        int len = this.a.size();
+        int mul;
+
+        for (int i = 0; i <= len; i++) {
+            mul = res.a.get(i, 0) * val + carry;
+            carry = mul / BASE;
+
+            res.a.set(i, mul % BASE, 0);
+        }
+
+        return res;
     }
 
 
@@ -199,15 +290,15 @@ public class Large implements Comparable<Large> {
         }
 
         // compare numbers by their sizes and signs
-        if (this.a.size() > o.a.size()){
-            if(!this.isNegative && !o.isNegative)
+        if (this.a.size() > o.a.size()) {
+            if (!this.isNegative && !o.isNegative)
                 return 1;
-            if(this.isNegative && o.isNegative){
+            if (this.isNegative && o.isNegative) {
                 return -1;
             }
         }
 
-        if (this.a.size() < o.a.size()){
+        if (this.a.size() < o.a.size()) {
             if (!this.isNegative && !o.isNegative)
                 return -1;
             if (this.isNegative && o.isNegative)
@@ -245,6 +336,18 @@ public class Large implements Comparable<Large> {
         return s.toString();
     }
 
+    /**
+     * Represents value without sign
+     * <p>
+     * For example, number '-123456' will returns as '123456'
+     * Any positive values return as same as {@code toString} method
+     *
+     * @return string representation of number without sign
+     */
+    public String getNonSignNumber() {
+        return this.isNegative ? this.toString().substring(1) : this.toString();
+    }
+
     private String prettyPrint() {
         if (sign() == 0) return "0";
 
@@ -267,5 +370,10 @@ public class Large implements Comparable<Large> {
         if (isNegative) s.append(")");
 
         return s.toString();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

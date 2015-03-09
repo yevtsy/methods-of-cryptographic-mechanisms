@@ -1,4 +1,4 @@
-package kpi.pti.crypto.core.arithmetic;
+package core.arithmetic;
 
 import java.util.ArrayList;
 
