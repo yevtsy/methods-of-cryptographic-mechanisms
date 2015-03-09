@@ -15,7 +15,9 @@ public class LargeTest {
 
     @Test
     public void testAbs() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertEquals("123", (new Large("-123")).abs().toString());
+        assertEquals("0", (new Large("0")).abs().toString());
+        assertEquals("123", (new Large("123")).abs().toString());
     }
 
     @Test
@@ -25,12 +27,12 @@ public class LargeTest {
         assertEquals(1, (new Large("123")).sign());
     }
 
-    @Test
-    public void testNonSignNumber() throws Exception {
-        assertEquals("123", (new Large("-123")).getNonSignNumber());
-        assertEquals("0", (new Large("0")).getNonSignNumber());
-        assertEquals("123", (new Large("123")).getNonSignNumber());
-    }
+//    @Test
+//    public void testNonSignNumber() throws Exception {
+//        assertEquals("123", (new Large("-123")).getNonSignNumber());
+//        assertEquals("0", (new Large("0")).getNonSignNumber());
+//        assertEquals("123", (new Large("123")).getNonSignNumber());
+//    }
 
     @Test
     public void testMultiplyByOrders() throws Exception {
@@ -41,8 +43,10 @@ public class LargeTest {
     @Test
     public void testMultiplyBySimpleValue() throws Exception {
         assertEquals("369", (new Large("123")).multiplyBySimpleValue(3).toString());
+        assertEquals("31488", (new Large("123")).multiplyBySimpleValue(256).toString());
         assertEquals("1272", (new Large("424")).multiplyBySimpleValue(3).toString());
-        assertEquals("0", (new Large("0")).multiplyByOrder(3).toString());
+        assertEquals("0", (new Large("0")).multiplyBySimpleValue(3).toString());
+        assertEquals("3", (new Large("1")).multiplyBySimpleValue(3).toString());
     }
 
 
