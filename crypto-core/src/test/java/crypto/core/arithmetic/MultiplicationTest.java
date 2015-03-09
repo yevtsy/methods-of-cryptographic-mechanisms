@@ -22,6 +22,10 @@ public class MultiplicationTest extends AbstractTest {
     public static Collection numbers() {
         return Arrays.asList(new Object[][]{
                 {"12345", "6789"},
+                {
+                        "9234013274012419836",
+                        "29340978319"
+                }
         });
     }
 

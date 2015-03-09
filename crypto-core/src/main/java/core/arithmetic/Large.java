@@ -1,5 +1,7 @@
 package core.arithmetic;
 
+import java.util.List;
+
 /**
  * Implementation of arbitrary-precision arithmetic operations on large integer numbers.
  *
@@ -27,9 +29,15 @@ public class Large implements Comparable<Large>, Cloneable {
     private boolean isNegative;
 
 
-    private Large() {
+    private Large(final List<Integer> initial) {
+        a = new ExtendedArrayList<>();
+        a.addAll(initial);
     }
 
+    public Large(final List<Integer> initial, boolean isNegative) {
+        this(initial);
+        this.isNegative = isNegative;
+    }
 
     public Large(String x) {
         // check input number format
@@ -53,7 +61,7 @@ public class Large implements Comparable<Large>, Cloneable {
 
         // fill the coefficients
         a = new ExtendedArrayList<>(x.length());
-        for (int i = x.length() - 1; i > -1; i--) {
+        for (int i = x.length() - 1; i >= 0; i--) {
             a.add(Character.getNumericValue(x.charAt(i)));
         }
     }
@@ -122,7 +130,7 @@ public class Large implements Comparable<Large>, Cloneable {
 
         for (int i = 0; i < a.size(); ++i) {
             diff = a.get(i, 0) - x.a.get(i, 0) + carry;
-            carry = diff >= 0 ? 0 : -1;
+            carry = (diff < 0) ? -1 : 0;
 
             result.a.set(i, (diff + BASE) % BASE);
         }
@@ -143,60 +151,44 @@ public class Large implements Comparable<Large>, Cloneable {
         return karatsubaMultiplication(this, x);
     }
 
-    private Large karatsubaMultiplication(final Large x, final Large y) throws CloneNotSupportedException {
-        if (isSmallNumber(x)) {
-            Large result = y.multiplyBySimpleValue(getSmallValue(x));
-            return result;
-        }
-        if (isSmallNumber(y)) {
-            Large result = x.multiplyBySimpleValue(getSmallValue(y));
-            return result;
-        }
+    private Large karatsubaMultiplication(final Large x, final Large y)  {
+        // x is a small number?
+        if (x.a.size() == 1) return y.multiply(x.a.get(0));
+
+        // y is a small number?
+        if (y.a.size() == 1) return x.multiply(y.a.get(0));
 
         int mid = Math.min(x.a.size(), y.a.size()) - 1;
 
-        Large high1 = x.getPartialNumber(0, x.a.size() - mid);
-        Large low1 = x.getPartialNumber(x.a.size() - mid, x.a.size());
+        Large low1 = x.getPartialNumber(0, mid);
+        Large high1 = x.getPartialNumber(mid, x.a.size());
 
-        Large high2 = y.getPartialNumber(0, y.a.size() - mid);
-        Large low2 = y.getPartialNumber(y.a.size() - mid, y.a.size());
+        Large low2 = y.getPartialNumber(0, mid);
+        Large high2 = y.getPartialNumber(mid, y.a.size());
 
         Large z0 = karatsubaMultiplication(low1, low2);
         Large z1 = karatsubaMultiplication(low1.add(high1), low2.add(high2));
         Large z2 = karatsubaMultiplication(high1, high2);
 
-//        Large result = z2.multiplyByOrder(2 * mid).add((z1.subtract(z2).subtract(z0)).multiplyByOrder(mid).add(z0));
-        Large result = z2.multiplyByOrder(2 * mid).add(
-                z1.multiplyByOrder(mid).add(
-                        z0));
+        Large result = z2.shiftLeft(2 * mid).add((z1.subtract(z2).subtract(z0)).shiftLeft(mid).add(z0));
         return result;
     }
 
-    private boolean isSmallNumber(final Large x) {
-        return x.a.size() == 1;
-    }
-
-    private Integer getSmallValue(final Large x) {
-        return x.a.get(0, 0);
-    }
 
     private Large getPartialNumber(int startIndex, int endIndex) {
-        final Large result = new Large();
-        result.a = new ExtendedArrayList<>();
-        result.a.addAll(this.a.subList(startIndex, endIndex));
-
-        return result;
+        return new Large(a.subList(startIndex, endIndex));
     }
 
+
     /**
-     * Simple multiplication by orders.
-     * For example, number '123' with n = 3 returns number 123000
+     * Returns a Large whose value is shifted left.
      *
-     * @param n number of order
-     * @return new large value multiplied by orders
+     * @param n shift distance, in orders.
+     * @return new large value shifted left by <cone>n</cone> orders
      */
-    public Large multiplyByOrder(int n) {
+    public Large shiftLeft(int n) {
         final Large result = this.clone();
+
         for (int i = 0; i < n; i++) {
             result.a.add(i, 0);
         }
@@ -206,18 +198,24 @@ public class Large implements Comparable<Large>, Cloneable {
     }
 
     /**
-     * Provides multiplication large {@link core.arithmetic.Large} number by small like {@link java.lang.Integer}
+     * Provides multiplication large {@link Large} number by small like {@link Integer}
      *
-     * @param val - small number to multiply with large {@link core.arithmetic.Large}
+     * @param x small number to multiply with large {@link Large}
      * @return new large {@link core.arithmetic.Large} number
      */
-    public Large multiplyBySimpleValue(final Integer val) {
+    public Large multiply(final Integer x) {
+        if (x < 0 || x >= BASE)
+            throw new IllegalArgumentException(String.format(
+                    "For this method argument should be in [0..%d), but was %d",
+                    BASE, x
+            ));
+
         final Large res = this.abs();
         int carry = 0;
         int mul;
 
         for (int i = 0; i <= a.size(); i++) {
-            mul = a.get(i, 0) * val + carry;
+            mul = a.get(i, 0) * x + carry;
             carry = mul / BASE;
 
             res.a.set(i, mul % BASE, 0);
@@ -339,38 +337,8 @@ public class Large implements Comparable<Large>, Cloneable {
     }
 
 
-    private String prettyPrint() {
-        if (sign() == 0) return "0";
-
-        StringBuilder s = new StringBuilder();
-        if (isNegative) s.append("-(");
-
-        int x;
-        for (int i = a.size() - 1; i >= 0; i--) {
-            x = a.get(i);
-            if (x != 0) {
-                s.append(x)
-                        .append("*")
-                        .append(BASE)
-                        .append('^')
-                        .append(i)
-                        .append(" + ");
-            }
-        }
-        s.delete(s.length() - 3, s.length());
-        if (isNegative) s.append(")");
-
-        return s.toString();
-    }
-
-
     @Override
     protected Large clone() {
-        final Large result = new Large();
-        result.a = new ExtendedArrayList<>();
-        result.a.addAll(this.a);
-        result.isNegative = this.isNegative;
-
-        return result;
+        return new Large(this.a, this.isNegative);
     }
 }
