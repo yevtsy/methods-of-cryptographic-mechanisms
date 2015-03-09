@@ -27,13 +27,6 @@ public class LargeTest {
         assertEquals(1, (new Large("123")).sign());
     }
 
-//    @Test
-//    public void testNonSignNumber() throws Exception {
-//        assertEquals("123", (new Large("-123")).getNonSignNumber());
-//        assertEquals("0", (new Large("0")).getNonSignNumber());
-//        assertEquals("123", (new Large("123")).getNonSignNumber());
-//    }
-
     @Test
     public void testMultiplyByOrders() throws Exception {
         assertEquals("123000", (new Large("123")).shiftLeft(3).toString());
@@ -43,7 +36,6 @@ public class LargeTest {
     @Test
     public void testMultiplyBySimpleValue() throws Exception {
         assertEquals("369", (new Large("123")).multiply(3).toString());
-        assertEquals("31488", (new Large("123")).multiply(256).toString());
         assertEquals("1272", (new Large("424")).multiply(3).toString());
         assertEquals("0", (new Large("0")).multiply(3).toString());
         assertEquals("3", (new Large("1")).multiply(3).toString());

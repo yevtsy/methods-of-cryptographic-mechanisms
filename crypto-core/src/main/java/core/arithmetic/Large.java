@@ -1,5 +1,7 @@
 package core.arithmetic;
 
+import core.Zip;
+
 import java.util.List;
 
 /**
@@ -16,10 +18,12 @@ public class Large implements Comparable<Large>, Cloneable {
     private static final byte BASE = 10;
 
     /**
-     * Every number could be represented as:
-     * <i>x = a<sub>n</sub> * BASE<sup>n</sup> + a<sub>n-1</sub> * BASE<sup>n-1</sup> + ... +
-     * a<sub>1</sub> * BASE + a<sub>0</sub></i>,
-     * where <i>a<sub>i</sub> &isin {0..BASE}</i>, <i>i = n..0</i>
+     * Every number could be represented as:<br/>
+     *      <i>x = a<sub>n</sub> * BASE<sup>n</sup> + a<sub>n-1</sub> * BASE<sup>n-1</sup> + &hellip; +
+     *      a<sub>1</sub> * BASE + a<sub>0</sub></i>,
+     * where <i>a<sub>i</sub> &isin [0..BASE)</i>, <i>i = n&hellip;0</i><br/>
+     * Coefficients are stored in little-endian format i.e.
+     *      <i>[a<sub>0</sub>, &hellip; ,a<sub>n-1</sub>, a<sub>n</sub>]</i>
      */
     private ExtendedArrayList<Integer> a;
 
@@ -29,16 +33,41 @@ public class Large implements Comparable<Large>, Cloneable {
     private boolean isNegative;
 
 
+    /**
+     * Helper constructor.
+     */
+    private Large() {
+        a = new ExtendedArrayList<>(0);
+    }
+
+    /**
+     * Helper constructor.
+     *
+     * @param initial a list of internal coefficients whose represents a number in base {@value #BASE}
+     */
     private Large(final List<Integer> initial) {
-        a = new ExtendedArrayList<>();
+        this();
         a.addAll(initial);
     }
 
-    public Large(final List<Integer> initial, boolean isNegative) {
+    /**
+     * Helper constructor.
+     *
+     * @param initial a list of internal coefficients whose represents a number in base {@value #BASE}
+     * @param isNegative if <code>true</code> number considered as below zero.
+     */
+    private Large(final List<Integer> initial, boolean isNegative) {
         this(initial);
         this.isNegative = isNegative;
     }
 
+    /**
+     * Constructor of large number.
+     *
+     * @param x string representation of number.
+     *          Could starts with '-' if number is negative.
+     *          Leading zeros will be ignored.
+     */
     public Large(String x) {
         // check input number format
         if (!x.matches("^-?\\d+$"))
@@ -48,7 +77,7 @@ public class Large implements Comparable<Large>, Cloneable {
 
         // case x = 0
         if (x.equals("0")) {
-            a = new ExtendedArrayList<>();
+            a = new ExtendedArrayList<>(0);
             a.add(0);
             return;
         }
@@ -59,11 +88,20 @@ public class Large implements Comparable<Large>, Cloneable {
             x = x.substring(1);
         }
 
-        // fill the coefficients
-        a = new ExtendedArrayList<>(x.length());
+        // fill the coefficients in little-endian format
+        a = new ExtendedArrayList<>(0, x.length());
         for (int i = x.length() - 1; i >= 0; i--) {
             a.add(Character.getNumericValue(x.charAt(i)));
         }
+    }
+
+
+    /**
+     * Creates a new copy of instance
+     */
+    @Override
+    protected Large clone() {
+        return new Large(this.a, this.isNegative);
     }
 
 
@@ -106,13 +144,13 @@ public class Large implements Comparable<Large>, Cloneable {
         int sum;
 
         for (int i = 0; i <= n; i++) {
-            sum = a.get(i, 0) + x.a.get(i, 0) + carry;
+            sum = a.get(i) + x.a.get(i) + carry;
             carry = sum / BASE;
 
-            result.a.set(i, sum % BASE, 0);
+            result.a.set(i, sum % BASE);
         }
 
-        result.a.trim(0);
+        result.a.trim();
         return result;
     }
 
@@ -129,13 +167,13 @@ public class Large implements Comparable<Large>, Cloneable {
         int diff;
 
         for (int i = 0; i < a.size(); ++i) {
-            diff = a.get(i, 0) - x.a.get(i, 0) + carry;
+            diff = a.get(i) - x.a.get(i) + carry;
             carry = (diff < 0) ? -1 : 0;
 
             result.a.set(i, (diff + BASE) % BASE);
         }
 
-        result.a.trim(0);
+        result.a.trim();
         return result;
     }
 
@@ -145,38 +183,55 @@ public class Large implements Comparable<Large>, Cloneable {
      *
      * @param x a large number to be multiplied.
      * @return large number multiplied by value of the argument.
-     * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      */
-    public Large multiply(final Large x) throws CloneNotSupportedException {
-        return karatsubaMultiplication(this, x);
+    public Large multiply(final Large x) {
+        return karatsuba(this, x);
     }
 
-    private Large karatsubaMultiplication(final Large x, final Large y)  {
-        // x is a small number?
+    /**
+     * Implementation of Karatsuba multiplication algorithm.
+     * The complexity of computation is &Theta;(n<sup>log&#8322;3</sup>).
+     *
+     * @param x first number to be multiplied
+     * @param y second number to be multiplied
+     * @return Large number that is a result of multiplication
+     * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
+     */
+    private Large karatsuba(final Large x, final Large y)  {
+        // is x or y a "small" number?
         if (x.a.size() == 1) return y.multiply(x.a.get(0));
-
-        // y is a small number?
         if (y.a.size() == 1) return x.multiply(y.a.get(0));
 
         int mid = Math.min(x.a.size(), y.a.size()) - 1;
 
-        Large low1 = x.getPartialNumber(0, mid);
-        Large high1 = x.getPartialNumber(mid, x.a.size());
+        final Zip<Large,Large> zipX = x.split(mid);
+        final Zip<Large,Large> zipY = y.split(mid);
 
-        Large low2 = y.getPartialNumber(0, mid);
-        Large high2 = y.getPartialNumber(mid, y.a.size());
+        Large z0 = karatsuba(zipX.one, zipY.one);
+        Large z1 = karatsuba(zipX.one.add(zipX.two), zipY.one.add(zipY.two));
+        Large z2 = karatsuba(zipX.two, zipY.two);
 
-        Large z0 = karatsubaMultiplication(low1, low2);
-        Large z1 = karatsubaMultiplication(low1.add(high1), low2.add(high2));
-        Large z2 = karatsubaMultiplication(high1, high2);
-
-        Large result = z2.shiftLeft(2 * mid).add((z1.subtract(z2).subtract(z0)).shiftLeft(mid).add(z0));
-        return result;
+        return z2.shiftLeft(2 * mid)
+                .add(
+                        ( z1.subtract(z2).subtract(z0) )
+                        .shiftLeft(mid)
+                        .add(z0)
+                );
     }
 
 
-    private Large getPartialNumber(int startIndex, int endIndex) {
-        return new Large(a.subList(startIndex, endIndex));
+    /**
+     * Helper method. Splits number <i>x</i> into two separate numbers <i>(low, high)</i>, as follows:<br/>
+     *      x = high * BASE<sup>index</sup> + low
+     *
+     * @param index point on splitting.
+     * @return a pair (an {@link Zip}) of numbers
+     */
+    private Zip<Large,Large> split(int index) {
+        return new Zip<>(
+                new Large(a.subList(0, index)),         // low part
+                new Large(a.subList(index, a.size()))   // high part
+        );
     }
 
 
@@ -193,9 +248,10 @@ public class Large implements Comparable<Large>, Cloneable {
             result.a.add(i, 0);
         }
 
-        result.a.trim(0);
+        result.a.trim();
         return result;
     }
+
 
     /**
      * Provides multiplication large {@link Large} number by small like {@link Integer}
@@ -206,22 +262,20 @@ public class Large implements Comparable<Large>, Cloneable {
     public Large multiply(final Integer x) {
         if (x < 0 || x >= BASE)
             throw new IllegalArgumentException(String.format(
-                    "For this method argument should be in [0..%d), but was %d",
-                    BASE, x
-            ));
+                    "Argument should be in [0..%d), but was %d", BASE, x));
 
         final Large res = this.abs();
         int carry = 0;
         int mul;
 
         for (int i = 0; i <= a.size(); i++) {
-            mul = a.get(i, 0) * x + carry;
+            mul = a.get(i) * x + carry;
             carry = mul / BASE;
 
-            res.a.set(i, mul % BASE, 0);
+            res.a.set(i, mul % BASE);
         }
 
-        res.a.trim(0);
+        res.a.trim();
         return res;
     }
 
@@ -334,11 +388,5 @@ public class Large implements Comparable<Large>, Cloneable {
         }
 
         return s.toString();
-    }
-
-
-    @Override
-    protected Large clone() {
-        return new Large(this.a, this.isNegative);
     }
 }

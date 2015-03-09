@@ -11,12 +11,14 @@ import java.util.ArrayList;
  * @since 08.03.15 16:49
  */
 public class ExtendedArrayList<T> extends ArrayList<T> {
+    private T def;
 
     /**
      * Constructs an empty list with an initial capacity of ten.
      */
-    public ExtendedArrayList() {
+    public ExtendedArrayList(T def) {
         super();
+        this.def = def;
     }
 
     /**
@@ -26,8 +28,9 @@ public class ExtendedArrayList<T> extends ArrayList<T> {
      * @throws IllegalArgumentException if the specified initial capacity
      *         is negative
      */
-    public ExtendedArrayList(int capacity) {
+    public ExtendedArrayList(T def, int capacity) {
         super(capacity);
+        this.def = def;
     }
 
 
@@ -41,6 +44,11 @@ public class ExtendedArrayList<T> extends ArrayList<T> {
      */
     public T get(int index, T def) {
         return isInRange(index) ? super.get(index) : def;
+    }
+
+    @Override
+    public T get(int index) {
+        return get(index, def);
     }
 
 
@@ -63,6 +71,13 @@ public class ExtendedArrayList<T> extends ArrayList<T> {
         }
     }
 
+
+    @Override
+    public T set(int index, T element) {
+        return set(index, element, def);
+    }
+
+
     /**
      * Trims tailing default elements in array.
      * Element with index 0 is never trimmed.
@@ -73,6 +88,10 @@ public class ExtendedArrayList<T> extends ArrayList<T> {
         while (get(size()-1) == def && size() > 1) {
             remove(size()-1);
         }
+    }
+
+    public void trim() {
+        trim(def);
     }
 
 
