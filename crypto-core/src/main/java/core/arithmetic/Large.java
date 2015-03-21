@@ -15,7 +15,7 @@ public class Large implements Comparable<Large>, Cloneable {
     /**
      * Number base.
      */
-    private static final int BASE = 10;
+    private static final int BASE = 10000;
     private static final int PACK = (int) Math.floor(Math.log10(BASE));
 
     /**
@@ -77,7 +77,7 @@ public class Large implements Comparable<Large>, Cloneable {
         x = x.replaceFirst("^0+(?!$)", "");
 
         // case x = 0
-        if (x.equals("0")) {
+        if ("0".equals(x)) {
             digits = new Digits();
             digits.add(0);
             return;
@@ -91,18 +91,10 @@ public class Large implements Comparable<Large>, Cloneable {
 
         // fill the coefficients in little-endian format
         digits = new Digits();
-//        for (int i = x.length() - 1; i >= 0; i--) {
-//            digits.add(Character.getNumericValue(x.charAt(i)));
-//        }
-
-        int v, u;
-        for (int i = x.length() - 1; i >= 0; i -= PACK) {
-            v = 0;
-            for (int j = Math.max(0, i - PACK + 1); j <= i; j++) {
-                u = Character.digit(x.charAt(j), 10);
-                v = v * 10 + u;
-            }
-            digits.add(v);
+        for (int i = x.length(); i > 0; i -= PACK) {
+            digits.add(Integer.parseInt(
+                    (i < PACK) ? x.substring(0, i) : x.substring(i - PACK, i)
+            ));
         }
     }
 
@@ -164,10 +156,10 @@ public class Large implements Comparable<Large>, Cloneable {
         if (other.sign() == 0) return clone();
 
         if (isNegative) {
-            if (other.isNegative) return (this.abs().add(other.abs())).negation();    // -A + -B = -(A + B)
-            else return other.subtract(this.abs());                                   // -A + B = B - A
+            if (other.isNegative) return (abs().add(other.abs())).negation();    // -A + -B = -(A + B)
+            else return other.subtract(abs());                                   // -A + B = B - A
         }
-        else if (other.isNegative) return this.subtract(other.abs());                 // A + -B = A - B
+        else if (other.isNegative) return subtract(other.abs());                 // A + -B = A - B
 
         //----------------------------------------------------------------
 
@@ -222,9 +214,9 @@ public class Large implements Comparable<Large>, Cloneable {
     public Large subtract(final Large other) {
         if (other.sign() == 0) return clone();
 
-        if (other.isNegative) return this.add(other.abs());             // A - -B = A + B
-        else if (isNegative) return this.abs().add(other).negation();   // -A - B = -(A + B)
-        else if (less(other)) return other.subtract(this).negation();
+        if (other.isNegative) return add(other.abs());             // A - -B = A + B
+        else if (isNegative) return abs().add(other).negation();   // -A - B = -(A + B)
+        else if (compareTo(other) == -1) return other.subtract(this).negation();
 
         //----------------------------------------------------------------
 
@@ -299,6 +291,7 @@ public class Large implements Comparable<Large>, Cloneable {
             }
         }
 
+        result.isNegative = isNegative != other.isNegative;
         result.digits.trim();
         return result;
     }
@@ -324,6 +317,7 @@ public class Large implements Comparable<Large>, Cloneable {
             result.digits.set(i, mul % BASE);
         }
 
+        result.isNegative = isNegative != (x < 0);
         result.digits.trim();
         return result;
     }
@@ -442,9 +436,10 @@ public class Large implements Comparable<Large>, Cloneable {
         }
 
         r = r.divide(norm);
+        r.digits.trim();
 
         q.digits.trim();
-        r.digits.trim();
+        q.isNegative = isNegative != other.isNegative;
 
         return new Zip<>(q, r);
     }
@@ -471,6 +466,7 @@ public class Large implements Comparable<Large>, Cloneable {
         }
 
         result.digits.trim();
+        result.isNegative = isNegative != (x < 0);
         return result;
     }
 
@@ -486,6 +482,22 @@ public class Large implements Comparable<Large>, Cloneable {
         return divideAndModulo(other).two;
     }
 
+    /**
+     * TODO
+     * @param x
+     * @return
+     */
+    public int modulo(int x) {
+        if (x < 0) x = -x;
+
+        int mod = 0;
+
+        for (int i = digits.size() - 1; i >= 0; i--) {
+            mod = (digits.get(i) + mod * BASE) % x;
+        }
+
+        return mod;
+    }
 
     /**
      * Provides power operation.
@@ -515,69 +527,27 @@ public class Large implements Comparable<Large>, Cloneable {
     @Override
     public int compareTo(final Large other) {
         // compare numbers by signs
-        if (!this.isNegative && other.isNegative) {
-            return 1;
-        } else if (this.isNegative && !other.isNegative) {
-            return -1;
-        }
-
-        // check numbers for equality
-        if (this.digits.equals(other.digits)) {
-            return 0;
-        }
+        if (!isNegative && other.isNegative) return 1;
+        if (isNegative && !other.isNegative) return -1;
 
         // compare numbers by their sizes and signs
-        if (this.digits.size() > other.digits.size()) {
-            if (!this.isNegative && !other.isNegative)
-                return 1;
-            if (this.isNegative && other.isNegative) {
-                return -1;
-            }
+        if (digits.size() > other.digits.size()) {
+            if (!isNegative && !other.isNegative) return 1;
+            if (isNegative && other.isNegative) return -1;
         }
 
-        if (this.digits.size() < other.digits.size()) {
-            if (!this.isNegative && !other.isNegative)
-                return -1;
-            if (this.isNegative && other.isNegative)
-                return 1;
+        if (digits.size() < other.digits.size()) {
+            if (!isNegative && !other.isNegative) return -1;
+            if (isNegative && other.isNegative) return 1;
         }
 
         // compare numbers by items in case sizes and signs are equal
-        for (int i = this.digits.size() - 1; i >= 0; i--) {
-            if (this.digits.get(i) > other.digits.get(i)) {
-                return 1;
-            } else if (this.digits.get(i) < other.digits.get(i)) {
-                return -1;
-            }
+        for (int i = digits.size() - 1; i >= 0; i--) {
+            if (digits.get(i) > other.digits.get(i)) return 1;
+            if (digits.get(i) < other.digits.get(i)) return -1;
         }
+
         return 0;
-    }
-
-    /**
-     * TODO
-     * @param other
-     * @return
-     */
-    public boolean less(final Large other) {
-        return compareTo(other) == -1;
-    }
-
-    /**
-     * TODO
-     * @param other
-     * @return
-     */
-    public boolean more(final Large other) {
-        return compareTo(other) == 1;
-    }
-
-    /**
-     * TODO
-     * @param other
-     * @return
-     */
-    public boolean equal(final Large other) {
-        return compareTo(other) == 1;
     }
 
 

@@ -64,6 +64,9 @@ public class LargeTest {
     public void testModulo() throws Exception {
         assertEquals("1", (new Large("124")).modulo(new Large("3")).toString());
         assertEquals("0", (new Large("123")).modulo(new Large("3")).toString());
+
+        assertEquals(1, (new Large("124")).modulo(3));
+        assertEquals(0, (new Large("123")).modulo(3));
     }
 
     @Test
