@@ -15,7 +15,8 @@ public class Large implements Comparable<Large>, Cloneable {
     /**
      * Number base.
      */
-    private static final byte BASE = 10;
+    private static final int BASE = 10;
+    private static final int PACK = (int) Math.floor(Math.log10(BASE));
 
     /**
      * Every number could be represented as:<br/>
@@ -25,7 +26,7 @@ public class Large implements Comparable<Large>, Cloneable {
      * Coefficients are stored in little-endian format i.e.
      *      <i>[a<sub>0</sub>, &hellip; ,a<sub>n-1</sub>, a<sub>n</sub>]</i>
      */
-    private ExtendedArrayList<Integer> a;
+    private Digits digits;
 
     /**
      * Stores a sign of number
@@ -37,7 +38,7 @@ public class Large implements Comparable<Large>, Cloneable {
      * Helper constructor.
      */
     private Large() {
-        a = new ExtendedArrayList<>(0);
+        digits = new Digits();
     }
 
     /**
@@ -47,7 +48,7 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     private Large(final List<Integer> initial) {
         this();
-        a.addAll(initial);
+        digits.addAll(initial);
     }
 
     /**
@@ -77,8 +78,8 @@ public class Large implements Comparable<Large>, Cloneable {
 
         // case x = 0
         if (x.equals("0")) {
-            a = new ExtendedArrayList<>(0);
-            a.add(0);
+            digits = new Digits();
+            digits.add(0);
             return;
         }
 
@@ -89,9 +90,19 @@ public class Large implements Comparable<Large>, Cloneable {
         }
 
         // fill the coefficients in little-endian format
-        a = new ExtendedArrayList<>(0, x.length());
-        for (int i = x.length() - 1; i >= 0; i--) {
-            a.add(Character.getNumericValue(x.charAt(i)));
+        digits = new Digits();
+//        for (int i = x.length() - 1; i >= 0; i--) {
+//            digits.add(Character.getNumericValue(x.charAt(i)));
+//        }
+
+        int v, u;
+        for (int i = x.length() - 1; i >= 0; i -= PACK) {
+            v = 0;
+            for (int j = Math.max(0, i - PACK + 1); j <= i; j++) {
+                u = Character.digit(x.charAt(j), 10);
+                v = v * 10 + u;
+            }
+            digits.add(v);
         }
     }
 
@@ -101,7 +112,7 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     @Override
     protected Large clone() {
-        return new Large(this.a, this.isNegative);
+        return new Large(this.digits, this.isNegative);
     }
 
 
@@ -117,6 +128,16 @@ public class Large implements Comparable<Large>, Cloneable {
         return result;
     }
 
+    /**
+     * TODO
+     * @return
+     */
+    public Large negation() {
+        final Large result = this.clone();
+        if (sign() != 0) result.isNegative = true;
+        return result;
+    }
+
 
     /**
      * Returns the signum function of a large number.
@@ -126,31 +147,44 @@ public class Large implements Comparable<Large>, Cloneable {
      * -1 if number is less than zero;
      */
     public int sign() {
-        return (a.size() == 1 && a.get(0) == 0) ? 0 : isNegative ? -1 : 1;
+        return (digits.isEmpty() || digits.size() == 1 && digits.getLSB() == 0) ? 0 : isNegative ? -1 : 1;
     }
+
+
+
 
 
     /**
      * Provides additional operation.
      *
-     * @param x a large number to be added.
+     * @param other a large number to be added.
      * @return large number increased by value of the argument.
      */
-    public Large add(final Large x) {
-        final Large result = this.clone();
-        int n = Math.max(a.size(), x.a.size());
+    public Large add(final Large other) {
+        if (other.sign() == 0) return clone();
+
+        if (isNegative) {
+            if (other.isNegative) return (this.abs().add(other.abs())).negation();    // -A + -B = -(A + B)
+            else return other.subtract(this.abs());                                   // -A + B = B - A
+        }
+        else if (other.isNegative) return this.subtract(other.abs());                 // A + -B = A - B
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+        int n = Math.max(digits.size(), other.digits.size());
 
         int carry = 0;
-        int sum;
+        int sum;        // < 2 * BASE
 
-        for (int i = 0; i <= n; i++) {
-            sum = a.get(i) + x.a.get(i) + carry;
+        for (int i = 0; i <= n || carry != 0; i++) {
+            sum = digits.get(i) + other.digits.get(i) + carry;
             carry = sum / BASE;
 
-            result.a.set(i, sum % BASE);
+            result.digits.set(i, sum % BASE);
         }
 
-        result.a.trim();
+        result.digits.trim();
         return result;
     }
 
@@ -158,34 +192,91 @@ public class Large implements Comparable<Large>, Cloneable {
     /**
      * Provides subtraction operation.
      *
-     * @param x a large number to be subtracted.
+     * @param other a large number to be subtracted.
      * @return large number decreased by value of the argument.
      */
-    public Large subtract(final Large x) {
-        final Large result = this.clone();
-        int carry = 0;
+    public Large subtract(final Large other) {
+        if (other.sign() == 0) return clone();
+
+        if (other.isNegative) return this.add(other.abs());             // A - -B = A + B
+        else if (isNegative) return this.abs().add(other).negation();   // -A - B = -(A + B)
+        else if (less(other)) return other.subtract(this).negation();
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+        int borrow = 0;
         int diff;
 
-        for (int i = 0; i < a.size(); ++i) {
-            diff = a.get(i) - x.a.get(i) + carry;
-            carry = (diff < 0) ? -1 : 0;
+        for (int i = 0; i < digits.size() || borrow != 0; i++) {
+            diff = digits.get(i) - other.digits.get(i) + borrow;
+            borrow = (diff < 0) ? -1 : 0;
 
-            result.a.set(i, (diff + BASE) % BASE);
+            result.digits.set(i, (diff + BASE) % BASE);
         }
 
-        result.a.trim();
+        result.digits.trim();
         return result;
     }
 
 
     /**
      * Provides multiplication operation.
+     * The complexity of computation is &Theta;(n<sup>2</sup>).
      *
-     * @param x a large number to be multiplied.
+     * @param other a large number to be multiplied.
      * @return large number multiplied by value of the argument.
      */
-    public Large multiply(final Large x) {
-        return karatsuba(this, x);
+    public Large multiply(final Large other) {
+        if (other.sign() == 0) return new Large();
+
+        //----------------------------------------------------------------
+
+        final Large result = new Large();
+        result.digits.set(digits.size() + other.digits.size() - 1, 0);
+
+        int carry;
+        int mul;        // < BASE^2
+
+        for (int i = 0; i < digits.size(); i++) {
+            if (digits.get(i) == 0) continue;
+
+            carry = 0;
+
+            for (int j = 0; j < other.digits.size() || carry != 0; j++) {
+                mul = digits.get(i) * other.digits.get(j) + result.digits.get(i+j) + carry;
+                carry = mul / BASE;
+
+                result.digits.set(i+j, mul % BASE);
+            }
+        }
+
+        result.digits.trim();
+        return result;
+    }
+
+    /**
+     * TODO
+     */
+    public Large multiply(int x) {
+        if (x == 0) return new Large();
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+
+        int carry = 0;
+        int mul;        // < BASE^2
+
+        for (int i = 0; i < digits.size() || carry != 0; i++) {
+            mul = digits.get(i) * x + carry;
+            carry = mul / BASE;
+
+            result.digits.set(i, mul % BASE);
+        }
+
+        result.digits.trim();
+        return result;
     }
 
     /**
@@ -199,10 +290,10 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     private Large karatsuba(final Large x, final Large y)  {
         // is x or y a "small" number?
-        if (x.a.size() == 1) return y.multiply(x.a.get(0));
-        if (y.a.size() == 1) return x.multiply(y.a.get(0));
+        if (x.digits.size() == 1) return y.multiply(x.digits.get(0));
+        if (y.digits.size() == 1) return x.multiply(y.digits.get(0));
 
-        int mid = Math.min(x.a.size(), y.a.size()) - 1;
+        int mid = Math.min(x.digits.size(), y.digits.size()) - 1;
 
         final Zip<Large,Large> zipX = x.split(mid);
         final Zip<Large,Large> zipY = y.split(mid);
@@ -229,8 +320,8 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     private Zip<Large,Large> split(int index) {
         return new Zip<>(
-                new Large(a.subList(0, index)),         // low part
-                new Large(a.subList(index, a.size()))   // high part
+                new Large(digits.subList(0, index)),         // low part
+                new Large(digits.subList(index, digits.size()))   // high part
         );
     }
 
@@ -245,73 +336,117 @@ public class Large implements Comparable<Large>, Cloneable {
         final Large result = this.clone();
 
         for (int i = 0; i < n; i++) {
-            result.a.add(i, 0);
+            result.digits.add(i, 0);
         }
 
-        result.a.trim();
+        result.digits.trim();
         return result;
     }
-
-
-    /**
-     * Provides multiplication large {@link Large} number by small like {@link Integer}
-     *
-     * @param x small number to multiply with large {@link Large}
-     * @return new large {@link core.arithmetic.Large} number
-     */
-    public Large multiply(final Integer x) {
-        if (x < 0 || x >= BASE)
-            throw new IllegalArgumentException(String.format(
-                    "Argument should be in [0..%d), but was %d", BASE, x));
-
-        final Large res = this.abs();
-        int carry = 0;
-        int mul;
-
-        for (int i = 0; i <= a.size(); i++) {
-            mul = a.get(i) * x + carry;
-            carry = mul / BASE;
-
-            res.a.set(i, mul % BASE);
-        }
-
-        res.a.trim();
-        return res;
-    }
-
 
     /**
      * Provides division operation.
      *
-     * @param x a large number to be divided.
+     * @param other a large number to be divided.
      * @return large number divided by value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Division_algorithm">Division algorithm</a>
      */
-    public Large divide(final Large x) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public Large divide(final Large other) {
+        return divideAndModulo(other).one;
+    }
+
+    /**
+     * Provides division operation.
+     *
+     * @param other a large number to be divided.
+     * @return large number divided by value of the argument.
+     * @see <a href="http://en.wikipedia.org/wiki/Division_algorithm">Division algorithm</a>
+     */
+    public Zip<Large, Large> divideAndModulo(final Large other) {
+        if (other.sign() == 0) throw new ArithmeticException("Division by zero");
+
+        //----------------------------------------------------------------
+
+        Large r = new Large();
+        final Large q = new Large();
+
+        final int norm = BASE / (other.digits.getMSB() + 1);
+
+        final Large a = abs().multiply(norm);
+        final Large b = other.abs().multiply(norm);
+
+        for (int i = a.digits.size() - 1; i >= 0; i--) {
+            r = r.shiftLeft(1);
+            r = r.add(new Large(a.digits.get(i).toString()));
+
+            int s1 = r.digits.get(b.digits.size());
+            int s2 = r.digits.get(b.digits.size() - 1);
+
+            int guess = (s1*BASE + s2) / b.digits.getMSB();
+
+            r = r.subtract(b.multiply(guess));
+            while (r.sign() < 0) {
+                r = r.add(b);
+                guess--;
+            }
+
+            q.digits.set(i, guess);
+
+            System.out.println(q);
+        }
+
+        r = r.divide(norm);
+
+        q.digits.trim();
+        r.digits.trim();
+
+        return new Zip<>(q, r);
+    }
+
+    /**
+     * TODO
+     */
+    public Large divide(int x) {
+        if (x == 0) throw new ArithmeticException("Division by zero");
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+
+        int r = 0;
+        int div;
+
+        for (int i = digits.size() - 1; i >= 0; i--) {
+            div = digits.get(i) + r * BASE;
+            r = div % x;
+
+            result.digits.set(i, div / x);
+        }
+
+        result.digits.trim();
+        return result;
     }
 
 
     /**
      * Provides modulo operation.
      *
-     * @param n a modulo value.
+     * @param other a modulo value.
      * @return large number modulo by the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Barrett_reduction">Barrett reduction algorithm</a>
      */
-    public Large modulo(final Large n) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public Large modulo(final Large other) {
+        return divideAndModulo(other).two;
     }
 
 
     /**
      * Provides power operation.
      *
-     * @param x a power value.
+     * @param other a power value.
      * @return large number powered to value of the argument.
      * @see <a href="http://en.wikipedia.org/wiki/Exponentiation_by_squaring#2k-ary_method">2<sup>k</sup>-ary method</a>
      */
-    public Large power(final Large x) {
+    public Large power(final Large other) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -319,55 +454,82 @@ public class Large implements Comparable<Large>, Cloneable {
     /**
      * Provides power operation by modulo.
      *
-     * @param x a power value.
+     * @param other a power value.
      * @param n a modulo value.
      * @return large number powered to value of the argument by modulo.
      * @see <a href="http://en.wikipedia.org/wiki/Modular_exponentiation">Modular exponentiation methods</a>
      */
-    public Large power(final Large x, final Large n) {
+    public Large power(final Large other, final Large n) {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
 
     @Override
-    public int compareTo(final Large o) {
+    public int compareTo(final Large other) {
         // compare numbers by signs
-        if (!this.isNegative && o.isNegative) {
+        if (!this.isNegative && other.isNegative) {
             return 1;
-        } else if (this.isNegative && !o.isNegative) {
+        } else if (this.isNegative && !other.isNegative) {
             return -1;
         }
 
         // check numbers for equality
-        if (this.a.equals(o.a)) {
+        if (this.digits.equals(other.digits)) {
             return 0;
         }
 
         // compare numbers by their sizes and signs
-        if (this.a.size() > o.a.size()) {
-            if (!this.isNegative && !o.isNegative)
+        if (this.digits.size() > other.digits.size()) {
+            if (!this.isNegative && !other.isNegative)
                 return 1;
-            if (this.isNegative && o.isNegative) {
+            if (this.isNegative && other.isNegative) {
                 return -1;
             }
         }
 
-        if (this.a.size() < o.a.size()) {
-            if (!this.isNegative && !o.isNegative)
+        if (this.digits.size() < other.digits.size()) {
+            if (!this.isNegative && !other.isNegative)
                 return -1;
-            if (this.isNegative && o.isNegative)
+            if (this.isNegative && other.isNegative)
                 return 1;
         }
 
         // compare numbers by items in case sizes and signs are equal
-        for (int i = 0; i < this.a.size(); ++i) {
-            if (this.a.get(i) > o.a.get(i)) {
+        for (int i = this.digits.size() - 1; i >= 0; i--) {
+            if (this.digits.get(i) > other.digits.get(i)) {
                 return 1;
-            } else if (this.a.get(i) < o.a.get(i)) {
+            } else if (this.digits.get(i) < other.digits.get(i)) {
                 return -1;
             }
         }
         return 0;
+    }
+
+    /**
+     * TODO
+     * @param other
+     * @return
+     */
+    public boolean less(final Large other) {
+        return compareTo(other) == -1;
+    }
+
+    /**
+     * TODO
+     * @param other
+     * @return
+     */
+    public boolean more(final Large other) {
+        return compareTo(other) == 1;
+    }
+
+    /**
+     * TODO
+     * @param other
+     * @return
+     */
+    public boolean equal(final Large other) {
+        return compareTo(other) == 1;
     }
 
 
@@ -383,8 +545,13 @@ public class Large implements Comparable<Large>, Cloneable {
         StringBuilder s = new StringBuilder();
         if (isNegative) s.append("-");
 
-        for (int i = a.size() - 1; i >= 0; i--) {
-            s.append(a.get(i));
+        int i = digits.size() - 1;
+        s.append(digits.get(i));
+
+        final String pattern = "%0"+PACK+"d";
+
+        for (i--; i >= 0; i--) {
+            s.append(String.format(pattern, digits.get(i)));
         }
 
         return s.toString();

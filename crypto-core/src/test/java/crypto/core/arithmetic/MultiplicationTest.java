@@ -21,6 +21,7 @@ public class MultiplicationTest extends AbstractTest {
     @Parameterized.Parameters
     public static Collection numbers() {
         return Arrays.asList(new Object[][]{
+                {"12", "9"},
                 {"12345", "6789"},
                 {
                         "9234013274012419836",

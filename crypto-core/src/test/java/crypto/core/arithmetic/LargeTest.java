@@ -28,7 +28,7 @@ public class LargeTest {
     }
 
     @Test
-    public void testMultiplyByOrders() throws Exception {
+    public void testShiftLeft() throws Exception {
         assertEquals("123000", (new Large("123")).shiftLeft(3).toString());
         assertEquals("0", (new Large("0")).shiftLeft(3).toString());
     }
@@ -37,6 +37,7 @@ public class LargeTest {
     public void testMultiplyBySimpleValue() throws Exception {
         assertEquals("369", (new Large("123")).multiply(3).toString());
         assertEquals("1272", (new Large("424")).multiply(3).toString());
+        assertEquals("3190203", (new Large("354467")).multiply(9).toString());
         assertEquals("0", (new Large("0")).multiply(3).toString());
         assertEquals("3", (new Large("1")).multiply(3).toString());
     }
@@ -49,7 +50,7 @@ public class LargeTest {
 
     @Test
     public void testDivide() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertEquals("41", (new Large("124")).divide(new Large("3")).toString());
     }
 
     @Test
