@@ -4,15 +4,13 @@ import java.util.ArrayList;
 
 /**
  * Class for storing and operating on internal number representation coefficients.
- * Allows access by every index. Returns defined default value if tries to get
+ * Allows access by every index. Returns 0 as a default value if tries to get
  * element outside the array bounds.
  *
  * @author vadym
  * @since 08.03.15 16:49
  */
 public class Digits extends ArrayList<Integer> {
-
-
     /**
      *  Returns the element at the specified position in this list
      *  or default value if element's index out of range.
@@ -27,21 +25,21 @@ public class Digits extends ArrayList<Integer> {
 
 
     /**
-     * least significant byte
+     * Returns least significant element
      *
-     * @return
+     * @return least significant element
      */
     public Integer getLSB() {
-        return super.get(0);
+        return get(0);
     }
 
     /**
-     * most significant byte
+     * Returns most significant element
      *
-     * @return
+     * @return most significant element
      */
     public Integer getMSB() {
-        return super.get(size()-1);
+        return get(size()-1);
     }
 
 
@@ -58,8 +56,8 @@ public class Digits extends ArrayList<Integer> {
         if (isInRange(index)) {
             return super.set(index, element);
         } else {
-            while (size() < index) super.add(0);
-            super.add(element);
+            while (size() < index) add(0);
+            add(element);
             return 0;
         }
     }
