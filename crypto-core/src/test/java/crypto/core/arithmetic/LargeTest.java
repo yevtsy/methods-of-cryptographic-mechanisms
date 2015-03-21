@@ -9,8 +9,8 @@ public class LargeTest {
 
     @Test
     public void testConstructor() throws Exception {
-        Large x = new Large("123");
-        System.out.println(x);
+        assertEquals("0", (new Large()).toString());
+        assertEquals("123", (new Large("123")).toString());
     }
 
     @Test
@@ -34,7 +34,20 @@ public class LargeTest {
     }
 
     @Test
-    public void testMultiplyBySimpleValue() throws Exception {
+    public void testAddition() throws Exception {
+        assertEquals("21", (new Large("12")).add(9).toString());
+        assertEquals("22", (new Large("12")).add(10).toString());
+        assertEquals("5243", (new Large("5234")).add(9).toString());
+    }
+
+    @Test
+    public void testSubtraction() throws Exception {
+        assertEquals("5234", (new Large("5234")).subtract(0).toString());
+        assertEquals("5225", (new Large("5234")).subtract(9).toString());
+    }
+
+    @Test
+    public void testMultiply() throws Exception {
         assertEquals("369", (new Large("123")).multiply(3).toString());
         assertEquals("1272", (new Large("424")).multiply(3).toString());
         assertEquals("3190203", (new Large("354467")).multiply(9).toString());
@@ -42,20 +55,15 @@ public class LargeTest {
         assertEquals("3", (new Large("1")).multiply(3).toString());
     }
 
-
-    @Test
-    public void testMultiply() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
     @Test
     public void testDivide() throws Exception {
-        assertEquals("41", (new Large("124")).divide(new Large("3")).toString());
+        assertEquals("41", (new Large("124")).divide(3).toString());
     }
 
     @Test
     public void testModulo() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertEquals("1", (new Large("124")).modulo(new Large("3")).toString());
+        assertEquals("0", (new Large("123")).modulo(new Large("3")).toString());
     }
 
     @Test
@@ -65,6 +73,6 @@ public class LargeTest {
 
     @Test
     public void testToString() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertEquals("14627333968688430767", (new Large("14627333968688430767")).toString());
     }
 }

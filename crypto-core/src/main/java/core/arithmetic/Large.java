@@ -37,7 +37,7 @@ public class Large implements Comparable<Large>, Cloneable {
     /**
      * Helper constructor.
      */
-    private Large() {
+    public Large() {
         digits = new Digits();
     }
 
@@ -177,8 +177,32 @@ public class Large implements Comparable<Large>, Cloneable {
         int carry = 0;
         int sum;        // < 2 * BASE
 
-        for (int i = 0; i <= n || carry != 0; i++) {
+        for (int i = 0; i < n || carry != 0; i++) {
             sum = digits.get(i) + other.digits.get(i) + carry;
+            carry = sum / BASE;
+
+            result.digits.set(i, sum % BASE);
+        }
+
+        result.digits.trim();
+        return result;
+    }
+
+    /**
+     * TODO
+     */
+    public Large add(int x) {
+        if (x == 0) return clone();
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+
+        int carry = x;
+        int sum;        // < 2 * BASE
+
+        for (int i = 0; i < digits.size() && carry != 0; i++) {
+            sum = digits.get(i) + carry;
             carry = sum / BASE;
 
             result.digits.set(i, sum % BASE);
@@ -210,6 +234,30 @@ public class Large implements Comparable<Large>, Cloneable {
 
         for (int i = 0; i < digits.size() || borrow != 0; i++) {
             diff = digits.get(i) - other.digits.get(i) + borrow;
+            borrow = (diff < 0) ? -1 : 0;
+
+            result.digits.set(i, (diff + BASE) % BASE);
+        }
+
+        result.digits.trim();
+        return result;
+    }
+
+
+    /**
+     * TODO
+     */
+    public Large subtract(int x) {
+        if (x == 0) return clone();
+
+        //----------------------------------------------------------------
+
+        final Large result = clone();
+        int borrow = -x;
+        int diff;
+
+        for (int i = 0; i < digits.size() && borrow != 0; i++) {
+            diff = digits.get(i) + borrow;
             borrow = (diff < 0) ? -1 : 0;
 
             result.digits.set(i, (diff + BASE) % BASE);
@@ -260,6 +308,7 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     public Large multiply(int x) {
         if (x == 0) return new Large();
+        if (x == 1) return clone();
 
         //----------------------------------------------------------------
 
@@ -290,10 +339,10 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     private Large karatsuba(final Large x, final Large y)  {
         // is x or y a "small" number?
-        if (x.digits.size() == 1) return y.multiply(x.digits.get(0));
-        if (y.digits.size() == 1) return x.multiply(y.digits.get(0));
+        if (x.digits.size() == 1) return y.multiply(x.digits.getLSB());
+        if (y.digits.size() == 1) return x.multiply(y.digits.getLSB());
 
-        int mid = Math.min(x.digits.size(), y.digits.size()) - 1;
+        int mid = Math.max(x.digits.size(), y.digits.size()) / 2;
 
         final Zip<Large,Large> zipX = x.split(mid);
         final Zip<Large,Large> zipY = y.split(mid);
@@ -376,22 +425,20 @@ public class Large implements Comparable<Large>, Cloneable {
 
         for (int i = a.digits.size() - 1; i >= 0; i--) {
             r = r.shiftLeft(1);
-            r = r.add(new Large(a.digits.get(i).toString()));
+            r = r.add(a.digits.get(i));
 
             int s1 = r.digits.get(b.digits.size());
             int s2 = r.digits.get(b.digits.size() - 1);
-
             int guess = (s1*BASE + s2) / b.digits.getMSB();
 
             r = r.subtract(b.multiply(guess));
+
             while (r.sign() < 0) {
                 r = r.add(b);
                 guess--;
             }
 
             q.digits.set(i, guess);
-
-            System.out.println(q);
         }
 
         r = r.divide(norm);
@@ -407,6 +454,7 @@ public class Large implements Comparable<Large>, Cloneable {
      */
     public Large divide(int x) {
         if (x == 0) throw new ArithmeticException("Division by zero");
+        if (x == 1) return clone();
 
         //----------------------------------------------------------------
 
