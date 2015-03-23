@@ -571,15 +571,18 @@ public class Large implements Comparable<Large>, Cloneable {
      * @return large number powered to value of the argument.
      */
     public Large power(int n) {
+        if (n == 0) return new Large("1");
+        if (n == 1) return this;
+
         // result large value
-        Large result = new Large("0");
+        Large result = new Large("1");
         Large current = this.clone();
 
-        while (n >= 0) {
+        while (n > 0) {
             if ((n & 1) == 1) {
-                result.multiply(current);
+                result = result.multiply(current);
             }
-            current.multiply(current);
+            current = current.multiply(current);
             n >>= 1;
         }
 

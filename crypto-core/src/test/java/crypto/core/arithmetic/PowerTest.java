@@ -1,10 +1,15 @@
 package crypto.core.arithmetic;
 
 import core.arithmetic.Large;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by yevhen.tsyba on 3/23/2015.
@@ -29,10 +34,10 @@ public class PowerTest {
                 {"0", "0"},
                 {"2", "1"},
                 {
-                        "9234013274012419836418634983459547689126439817263478157836453178654",
-                        "213"
+                        "923401327923401327923401327",
+                        "212"
                 }, {
-                "-9234013274012419836418634983459547689126439817263478157836453178654",
+                "-923401327923401327923401327",
                 "67"
         }
         });
