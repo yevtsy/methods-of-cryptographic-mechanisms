@@ -564,6 +564,28 @@ public class Large implements Comparable<Large>, Cloneable {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
+    /**
+     * Provides power operation.
+     *
+     * @param n a power value, see {@link java.lang.Integer}
+     * @return large number powered to value of the argument.
+     */
+    public Large power(int n) {
+        // result large value
+        Large result = new Large("0");
+        Large current = this.clone();
+
+        while (n >= 0) {
+            if ((n & 1) == 1) {
+                result.multiply(current);
+            }
+            current.multiply(current);
+            n >>= 1;
+        }
+
+        return result;
+    }
+
 
     @Override
     public int compareTo(final Large other) {

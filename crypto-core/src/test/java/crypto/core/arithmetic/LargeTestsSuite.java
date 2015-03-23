@@ -14,7 +14,8 @@ import org.junit.runners.Suite.SuiteClasses;
         CompareTest.class,
         SubtractionTest.class,
         LargeTest.class,
-        MultiplicationTest.class
+        MultiplicationTest.class,
+        PowerTest.class
 })
 public class LargeTestsSuite {
 }
