@@ -530,41 +530,6 @@ public class Large implements Comparable<Large>, Cloneable {
     }
 
     /**
-     * Provides modulo operation. Barret's algorithm.
-     *
-     * @param other a modulo value.
-     * @return large number modulo by the argument.
-     * @see <a href="http://en.wikipedia.org/wiki/Barrett_reduction">Barrett reduction algorithm</a>
-     */
-    public Large barret(final Large other) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    /**
-     * Provides power operation.
-     *
-     * @param other a power value.
-     * @return large number powered to value of the argument.
-     * @see <a href="http://en.wikipedia.org/wiki/Exponentiation_by_squaring#2k-ary_method">2<sup>k</sup>-ary method</a>
-     */
-    public Large power(final Large other) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-
-    /**
-     * Provides power operation by modulo.
-     *
-     * @param other a power value.
-     * @param n a modulo value.
-     * @return large number powered to value of the argument by modulo.
-     * @see <a href="http://en.wikipedia.org/wiki/Modular_exponentiation">Modular exponentiation methods</a>
-     */
-    public Large power(final Large other, final Large n) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    /**
      * Provides power operation.
      *
      * @param n a power value, see {@link java.lang.Integer}
@@ -588,7 +553,6 @@ public class Large implements Comparable<Large>, Cloneable {
 
         return result;
     }
-
 
     @Override
     public int compareTo(final Large other) {
