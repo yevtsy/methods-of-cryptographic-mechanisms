@@ -10,12 +10,13 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
+        LargeTest.class,
         AdditionTest.class,
         CompareTest.class,
-        SubtractionTest.class,
-        LargeTest.class,
+        DivisionTest.class,
         MultiplicationTest.class,
-        PowerTest.class
+        PowerTest.class,
+        SubtractionTest.class
 })
 public class LargeTestsSuite {
 }

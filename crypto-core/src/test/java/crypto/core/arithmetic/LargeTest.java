@@ -29,7 +29,7 @@ public class LargeTest {
 
     @Test
     public void testShiftLeft() throws Exception {
-        assertEquals("123000", (new Large("123")).shiftLeft(3).toString());
+        assertEquals("123000000000000", (new Large("123")).shiftLeft(3).toString());
         assertEquals("0", (new Large("0")).shiftLeft(3).toString());
     }
 
@@ -69,10 +69,6 @@ public class LargeTest {
         assertEquals(0, (new Large("123")).modulo(3));
     }
 
-    @Test
-    public void testPower() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
 
     @Test
     public void testToString() throws Exception {

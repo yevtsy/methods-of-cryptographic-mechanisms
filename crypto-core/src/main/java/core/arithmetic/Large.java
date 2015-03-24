@@ -22,10 +22,10 @@ public class Large implements Comparable<Large>, Cloneable {
     private static final int PACK = (int) Math.floor(Math.log10(BASE));
 
     /**
-     * Every number could be represented as:<br/>
+     * Every number could be represented as:<br>
      *      <i>x = a<sub>n</sub> * BASE<sup>n</sup> + a<sub>n-1</sub> * BASE<sup>n-1</sup> + &hellip; +
      *      a<sub>1</sub> * BASE + a<sub>0</sub></i>,
-     * where <i>a<sub>i</sub> &isin [0..BASE)</i>, <i>i = n&hellip;0</i><br/>
+     * where <i>a<sub>i</sub> &isin; [0..BASE)</i>, <i>i = n&hellip;0</i><br>
      * Coefficients are stored in little-endian format i.e.
      *      <i>[a<sub>0</sub>, &hellip; ,a<sub>n-1</sub>, a<sub>n</sub>]</i>
      */
@@ -362,19 +362,21 @@ public class Large implements Comparable<Large>, Cloneable {
 
     /**
      * Implementation of Karatsuba multiplication algorithm.
-     * The complexity of computation is &Theta;(n<sup>log&#8322;3</sup>).
+     * The complexity of computation is &Theta;(n<sup>log₂3</sup>).
      *
      * @param x first number to be multiplied
      * @param y second number to be multiplied
      * @return new instance of large number that is a result of multiplication
      * @see <a href="http://en.wikipedia.org/wiki/Karatsuba_algorithm">Karatsuba algorithm</a>
      */
-    private Large karatsuba(final Large x, final Large y)  {
+    public static Large karatsuba(final Large x, final Large y)  {
         // is x or y a "small" number?
-        if (x.digits.size() == 1) return y.multiply(x.digits.getLSB());
-        if (y.digits.size() == 1) return x.multiply(y.digits.getLSB());
+        if (x.isSmall()) return y.multiply(x.digits.getLSB());
+        if (y.isSmall()) return x.multiply(y.digits.getLSB());
 
         int mid = Math.max(x.digits.size(), y.digits.size()) / 2;
+        int min = Math.min(x.digits.size(), y.digits.size());
+        if (mid > min) mid = min - 1;
 
         final Zip<Large,Large> zipX = x.split(mid);
         final Zip<Large,Large> zipY = y.split(mid);
@@ -397,7 +399,7 @@ public class Large implements Comparable<Large>, Cloneable {
      * Equivalent as multiplying in a power of BASE<sup>n</sup>.
      *
      * @param n shift distance, in orders.
-     * @return new instance of large number shifted left by <cone>n</cone> orders
+     * @return new instance of large number shifted left by <i>n</i> orders
      */
     public Large shiftLeft(int n) {
         final Large result = this.clone();
@@ -607,7 +609,7 @@ public class Large implements Comparable<Large>, Cloneable {
 
 
     /**
-     * Helper method. Splits number <i>x</i> into two separate numbers <i>(low, high)</i>, as follows:<br/>
+     * Helper method. Splits number <i>x</i> into two separate numbers <i>(low, high)</i>, as follows:<br>
      *      x = high * BASE<sup>index</sup> + low
      *
      * @param index point on splitting.
@@ -618,5 +620,14 @@ public class Large implements Comparable<Large>, Cloneable {
                 new Large(digits.subList(0, index)),              // low part
                 new Large(digits.subList(index, digits.size()))   // high part
         );
+    }
+
+    /**
+     * Helper method. Determines if Large number is "small" i.e. < BASE.
+     *
+     * @return <code>true</code> if number is small, <code>false</code> otherwise.
+     */
+    private boolean isSmall() {
+        return digits.size() == 1 || digits.isEmpty();
     }
 }
