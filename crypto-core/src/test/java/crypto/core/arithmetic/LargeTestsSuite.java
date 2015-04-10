@@ -1,4 +1,4 @@
-package kpi.pti.crypto.core.arithmetic;
+package crypto.core.arithmetic;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -10,10 +10,13 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
+        LargeTest.class,
         AdditionTest.class,
         CompareTest.class,
-        SubtractionTest.class,
-        LargeTest.class
+        DivisionTest.class,
+        MultiplicationTest.class,
+        PowerTest.class,
+        SubtractionTest.class
 })
 public class LargeTestsSuite {
 }
