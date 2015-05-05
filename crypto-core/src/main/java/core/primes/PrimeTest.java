@@ -2,6 +2,10 @@ package core.primes;
 
 import core.arithmetic.Large;
 
+import java.math.BigInteger;
+
+import static java.math.BigInteger.ONE;
+
 /**
  * Class provides probabilistic algorithms for primality testing.
  *
@@ -19,8 +23,17 @@ public class PrimeTest {
      *         <code>true</code> if <code>n</code> is <b>probably</b> prime
      * @see <a href="https://en.wikipedia.org/wiki/Primality_test#Pseudocode">Primality test</a>
      */
-    public static boolean primality(final Large n) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public static boolean primality(int n) {
+        if (n <= 1) return false;
+        if (n <= 3) return true;
+
+        if (n % 2 == 0 || n % 3 == 0) return false;
+
+        for (int i = 5; i < Math.sqrt(n); i += 6) {
+            if (n % i == 0 || n % (i + 2) == 0) return false;
+        }
+
+        return true;
     }
 
 
@@ -33,8 +46,22 @@ public class PrimeTest {
      *         <code>true</code> if <code>n</code> is <b>probably</b> prime
      *         (no guarantee that <code>n</code> is real prime).
      */
-    public static boolean Fermat(final Large n, int t) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public static boolean Fermat(final BigInteger n, int t) {
+        BigInteger a, r;
+
+        for (int i = 0; i < t; i++) {
+            // a = random [2; n-2]
+            a = Chaos.getInstance().getBigInteger(2, n.subtract(BigInteger.valueOf(2)));
+
+            // r = a ^ (n-1) mod n
+            r = a.modPow(n.subtract(ONE), n);
+
+            // if (r != 1) then, complex number
+            if (r.compareTo(ONE) != 0) return false;
+        }
+
+        // .. else, probably prime
+        return true;
     }
 
 
