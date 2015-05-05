@@ -1,4 +1,4 @@
-package crypto.core.arithmetic;
+package core.arithmetic;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
