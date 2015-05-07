@@ -86,13 +86,15 @@ public class PrimeTest {
      * Provides Miller-Rabin prime test.
      *
      * @param n integer number for testing
-     * @param r security parameter (iteration counter)
      * @return <code>false</code> if <code>n</code> is complex number, and
      *         <code>true</code> if <code>n</code> is <b>probably</b> prime
      *         (no guarantee that <code>n</code> is real prime).
+     * @see <a href="https://en.wikipedia.org/wiki/Miller–Rabin_primality_test">Miller-Rabin test</a>
      */
-    public static boolean MillerRabin(final Large n, int r) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public static boolean MillerRabin(final BigInteger n) {
+        int certainty = n.bitLength()*n.bitLength();
+
+        return n.isProbablePrime(certainty);
     }
 
 
