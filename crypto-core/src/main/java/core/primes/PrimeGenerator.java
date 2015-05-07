@@ -18,6 +18,16 @@ public class PrimeGenerator {
     private static int length = 512;
 
     /**
+     * Useful constant
+     */
+    private static final BigInteger TWO = new BigInteger("2");
+
+    /**
+     * Base of calculations
+     */
+    private static final int radix = 2;
+
+    /**
      * Generates big prime number by Maurer’s algorithm.
      *
      * @param k number of bits in generated prime number
@@ -38,8 +48,19 @@ public class PrimeGenerator {
      * @return
      * @see <a href="http://en.wikipedia.org/wiki/Blum%E2%80%93Micali_algorithm">Blum-Micali algorithm</a>
      */
-    public static Large BlumMicali(final Large x0, final Large p, final Large q) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public static BigInteger BlumMicali(final BigInteger x0, final BigInteger p, final BigInteger q) {
+        StringBuilder result = new StringBuilder();
+
+        BigInteger x = q.modPow(x0, p);
+
+        for (int i = 0; i < length*8; ++i) {
+            x = q.modPow(x, p);
+
+            x = x.compareTo(p.subtract(BigInteger.ONE).divide(TWO)) == -1 ? BigInteger.ONE : BigInteger.ZERO;
+            result.append(x);
+        }
+
+        return new BigInteger(result.toString(), radix);
     }
 
 
@@ -53,18 +74,29 @@ public class PrimeGenerator {
      * @see <a href="http://en.wikipedia.org/wiki/Blum_Blum_Shub">Blum Blum Shub algorithm</a>
      */
     public static BigInteger BBS(final BigInteger x0, final BigInteger p, final BigInteger q) {
+
+        if (!isValidBbsPrime(p) || !isValidBbsPrime(q)){
+            throw new IllegalArgumentException("Provided P or Q are not quadratic residue");
+        }
+
         BigInteger mod = p.multiply(q);
-        BigInteger exp = new BigInteger("2");
-        int radix = 2;
+        BigInteger exp = TWO;
 
         StringBuilder result = new StringBuilder();
         BigInteger x = x0.modPow(exp, mod);
 
         for (int i = 0; i < length*8; ++i) {
             x = x.modPow(exp, mod);
-            result.append(x);
+            result.append(x.mod(TWO));
         }
 
         return new BigInteger(result.toString(), radix);
+    }
+
+    private static boolean isValidBbsPrime(final BigInteger prime) {
+        BigInteger THREE = new BigInteger("3");
+        BigInteger FOUR = new BigInteger("4");
+
+        return prime.mod(THREE).equals(FOUR);
     }
 }
