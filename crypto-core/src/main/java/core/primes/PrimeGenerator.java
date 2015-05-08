@@ -43,8 +43,8 @@ public class PrimeGenerator {
      * Generates big prime number by Blum-Micali's algorithm.
      *
      * @param x0 seed
-     * @param p odd prime
-     * @param q prime
+     * @param p  odd prime
+     * @param q  prime
      * @return
      * @see <a href="http://en.wikipedia.org/wiki/Blum%E2%80%93Micali_algorithm">Blum-Micali algorithm</a>
      */
@@ -53,7 +53,7 @@ public class PrimeGenerator {
 
         BigInteger x = q.modPow(x0, p);
 
-        for (int i = 0; i < length*8; ++i) {
+        for (int i = 0; i < length * 8; ++i) {
             x = q.modPow(x, p);
 
             x = x.compareTo(p.subtract(BigInteger.ONE).divide(TWO)) == -1 ? BigInteger.ONE : BigInteger.ZERO;
@@ -68,14 +68,14 @@ public class PrimeGenerator {
      * Generates big prime number by Blum-Micali's algorithm.
      *
      * @param x0 seed
-     * @param p odd prime
-     * @param q prime
+     * @param p  odd prime
+     * @param q  prime
      * @return
      * @see <a href="http://en.wikipedia.org/wiki/Blum_Blum_Shub">Blum Blum Shub algorithm</a>
      */
     public static BigInteger BBS(final BigInteger x0, final BigInteger p, final BigInteger q) {
 
-        if (!isValidBbsPrime(p) || !isValidBbsPrime(q)){
+        if (!isValidBbsPrime(p) || !isValidBbsPrime(q)) {
             throw new IllegalArgumentException("Provided P or Q are not quadratic residue");
         }
 
@@ -85,7 +85,7 @@ public class PrimeGenerator {
         StringBuilder result = new StringBuilder();
         BigInteger x = x0.modPow(exp, mod);
 
-        for (int i = 0; i < length*8; ++i) {
+        for (int i = 0; i < length * 8; ++i) {
             x = x.modPow(exp, mod);
             result.append(x.mod(TWO));
         }
