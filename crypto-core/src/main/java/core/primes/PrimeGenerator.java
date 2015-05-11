@@ -40,9 +40,8 @@ public class PrimeGenerator {
      * @see <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.89.4426&rep=rep1&type=pdf"/>
      * @see <a href="http://s13.zetaboards.com/Crypto/topic/7234475/1/"/>
      */
-    public static BigInteger Maurer(int k) {
+    public static BigInteger Maurer(final int k) {
         Random rand = new Random();
-        boolean isPrime;
 
         if (k < 20) {
 
@@ -73,15 +72,17 @@ public class PrimeGenerator {
              environments.
              */
 
-            double c = 0.005;
+            double c = 0.1;
+//            double c = 0.005;
+            double r = 0.5;
             int m = 20;
 
-            double B = c * k * k, r;
+            double B = c * k * k;
 
-            if (k > 2 * m) {
+            if (k > 2*m) {
 
                 while (true) {
-                    int s = rand.nextInt();
+                    double s = Math.random();
 
                     r = Math.pow(2, s - 1);
 
@@ -89,11 +90,9 @@ public class PrimeGenerator {
                         break;
                     }
                 }
-            } else {
-                r = 0.5;
             }
 
-            BigInteger q = Maurer((int) r * k);
+            BigInteger q = Maurer(Double.valueOf(r * k).intValue());
             BigInteger I = BigInteger.valueOf(2 ^ (k - 1)).divide(q.multiply(TWO));
             boolean success = false;
             BigInteger rBigInt, nBigInt = BigInteger.ZERO;

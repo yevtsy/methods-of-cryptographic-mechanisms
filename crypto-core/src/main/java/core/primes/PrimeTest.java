@@ -52,10 +52,6 @@ public class PrimeTest {
      */
     public static boolean Fermat(final BigInteger n, int t) {
 
-        if (!passSimpleVerificationForPrimarility(n)) {
-            return false;
-        }
-
         BigInteger a, r;
 
         for (int i = 0; i < t; i++) {
@@ -87,16 +83,16 @@ public class PrimeTest {
      */
     public static boolean SolovayStrassen(final BigInteger n, int k) {
 
-        if (!passSimpleVerificationForPrimarility(n)) {
-            return false;
-        }
-
         BigInteger a, condition;
         String randStr;
         Random random = new Random();
 
         for (int i = 0; i < k; ++i) {
+
             randStr = String.valueOf(random.nextInt(n.bitLength() * n.bitLength() * n.bitLength()));
+            while (n.compareTo(new BigInteger(randStr)) <= 0) {
+                randStr = String.valueOf(random.nextInt(n.bitLength() * n.bitLength() * n.bitLength()));
+            }
             a = new BigInteger(randStr);
 
             if (!a.gcd(n).equals(BigInteger.ONE)) {
@@ -104,9 +100,9 @@ public class PrimeTest {
             }
 
             BigInteger jacobi = Jacobi(a, n);
-            condition = a.modPow(n.subtract(BigInteger.ONE).divide(TWO), n);
+            condition = a.modPow((n.subtract(BigInteger.ONE)).divide(TWO), n);
 
-            if (!jacobi.equals(condition)) {
+            if (!jacobi.equals(condition) && !jacobi.add(n).equals(condition)) {
                 return false;
             }
         }
@@ -126,32 +122,9 @@ public class PrimeTest {
      */
     public static boolean MillerRabin(final BigInteger n) {
 
-        if (!passSimpleVerificationForPrimarility(n)) {
-            return false;
-        }
-
         int certainty = n.bitLength() * n.bitLength();
 
         return n.isProbablePrime(certainty);
-    }
-
-    /**
-     * Make validation for simple cases to avoid highload computations.
-     * Check id number is 0, 1, 2 or 2*m
-     *
-     * @param n integer number for testing
-     * @return
-     */
-    private static boolean passSimpleVerificationForPrimarility(final BigInteger n) {
-        if (n.equals(TWO)) {
-            return true;
-        }
-
-        if (n.equals(BigInteger.ONE) || n.equals(BigInteger.ZERO) || n.remainder(TWO).equals(BigInteger.ZERO)) {
-            return false;
-        }
-
-        return true;
     }
 
 
@@ -163,49 +136,32 @@ public class PrimeTest {
      * @return Jacobi symbol (<code>a</code>/<code>n</code>)
      * @see <a href="http://en.wikipedia.org/wiki/Jacobi_symbol">Jacobi Symbol</a>
      */
-    private static BigInteger Jacobi(final BigInteger m, final BigInteger n) {
+    public static BigInteger Jacobi(final BigInteger m, final BigInteger n) {
 
-        if (n.compareTo(BigInteger.ZERO) < 0 || n.remainder(TWO).equals(BigInteger.ZERO)) {
-            return BigInteger.ZERO;
-        }
+        BigInteger ans = BigInteger.ZERO, eight = new BigInteger("8"), four = new BigInteger("4"),
+                three = new BigInteger("3");
 
-        BigInteger tmp, a = m, b = n, j = BigInteger.ONE;
-        BigInteger three = new BigInteger("3"), four = new BigInteger("4"), five = new BigInteger("5"), eight = new BigInteger("8");
-
-        if (a.compareTo(BigInteger.ZERO) < 0) {
-            a = a.negate();
-
-            if (b.remainder(four).equals(three)) {
-                j = j.negate();
+        if (m.equals(BigInteger.ZERO)) {
+            ans = n.equals(BigInteger.ONE) ? BigInteger.ONE : BigInteger.ZERO;
+        } else if (m.equals(TWO)) {
+            switch (n.remainder(eight).intValue()) {
+                case 1:
+                case 7:
+                    ans = BigInteger.ONE;
+                    break;
+                case 3:
+                case 5:
+                    ans = BigInteger.ONE.negate();
+                    break;
             }
+        } else if (m.compareTo(n) >= 0) {
+            ans = Jacobi(m.remainder(n), n);
+        } else if (m.remainder(TWO).equals(BigInteger.ZERO)) {
+            ans = Jacobi(TWO, n).multiply(Jacobi(m.divide(TWO), n));
+        } else {
+            ans = (m.remainder(four).equals(three) && n.remainder(four).equals(three)) ?
+                    Jacobi(n, m).negate() : Jacobi(n, m);
         }
-
-        while (a.compareTo(BigInteger.ZERO) != 0) {
-
-            while (a.remainder(TWO).equals(BigInteger.ZERO)) {
-                a = a.divide(TWO);
-
-                if (b.remainder(eight).equals(three) || b.remainder(eight).equals(five)) {
-                    j = j.negate();
-                }
-            }
-
-            // change numbers
-            tmp = a;
-            a = b;
-            b = tmp;
-
-            if (a.remainder(four).equals(three) || b.remainder(four).equals(three)) {
-                j = j.negate();
-            }
-
-            a = a.remainder(b);
-        }
-
-        if (b.compareTo(BigInteger.ONE) == 0) {
-            return j;
-        }
-
-        return BigInteger.ZERO;
+        return ans;
     }
 }
