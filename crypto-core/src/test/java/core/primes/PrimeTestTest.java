@@ -31,8 +31,24 @@ public class PrimeTestTest {
         assertPrime(PrimeTest.Fermat(BigInteger.valueOf(991), 2));
         assertPrime(PrimeTest.Fermat(BigInteger.valueOf(3571), 2));
 
-        assertComplex(PrimeTest.primality(37 * 16));
-        assertComplex(PrimeTest.primality(3557 * 1601));
+        assertComplex(PrimeTest.Fermat(BigInteger.valueOf(37 * 16), 2));
+        assertComplex(PrimeTest.Fermat(BigInteger.valueOf(3557 * 1601), 2));
+    }
+
+    @Test
+    /**
+     * Carmichael numbers:
+     *      composite numbers n such that a^(n-1) == 1 (mod n) for every a co-prime to n.
+     *
+     * @see https://oeis.org/A002997
+     */
+    public void shouldTestFermatCarmichaelNumber() throws Exception {
+        assertPrime(PrimeTest.Fermat(BigInteger.valueOf(1105), 1));
+        assertPrime(PrimeTest.Fermat(BigInteger.valueOf(512461), 1));
+
+        // <!>: Warning
+        //      Those numbers as actually complex numbers!
+        //      That is way sometimes this test may fail.
     }
 
     @Test
