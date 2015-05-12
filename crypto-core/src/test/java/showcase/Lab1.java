@@ -1,4 +1,4 @@
-package crypto.showcase;
+package showcase;
 
 import core.arithmetic.Large;
 

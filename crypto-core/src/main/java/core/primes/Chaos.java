@@ -39,8 +39,4 @@ public class Chaos {
     public BigInteger getBigInteger(int from, final BigInteger to) {
         return getBigInteger(BigInteger.valueOf(from), to);
     }
-
-    public BigInteger getBigInteger(int from, int to) {
-        return getBigInteger(BigInteger.valueOf(from), BigInteger.valueOf(to));
-    }
 }

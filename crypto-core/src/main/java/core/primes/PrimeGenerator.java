@@ -1,7 +1,12 @@
 package core.primes;
 
 import java.math.BigInteger;
-import java.util.Random;
+
+import static core.primes.PrimeTest.TWO;
+import static core.primes.PrimeTest.THREE;
+import static core.primes.PrimeTest.FOUR;
+import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.ZERO;
 
 /**
  * Class provides prime generator algorithms.
@@ -10,211 +15,166 @@ import java.util.Random;
  * @since 05.05.15 19:23
  */
 public class PrimeGenerator {
-
-    /**
-     * Length of the sequence
-     */
-    private static int length = 512;
-
-    /**
-     * Useful constant
-     */
-    private static final BigInteger TWO = new BigInteger("2");
-
-    /**
-     * Base of calculations
-     */
-    private static final int radix = 2;
-
     /**
      * The initial constellation of the table of small primes.
      */
-    private static int[] ptab = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71};
+    private static int[] PRIMES = {
+            2,   3,   5,   7,   11,  13,  17,  19,  23,  29,
+            31,  37,  41,  43,  47,  53,  59,  61,  67,  71,
+            73,  79,  83,  89,  97,  101, 103, 107, 109, 113,
+            127, 131, 137, 139, 149, 151, 157, 163, 167, 173,
+            179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
+            233, 239, 241, 251, 257, 263, 269, 271, 277, 281,
+            283, 293, 307, 311, 313, 317, 331, 337, 347, 349,
+            353, 359, 367, 373, 379, 383, 389, 397, 401, 409,
+            419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
+            467, 479, 487, 491, 499, 503, 509, 521, 523, 541,
+            547, 557, 563, 569, 571, 577, 587, 593, 599, 601,
+            607, 613, 617, 619, 631, 641, 643, 647, 653, 659,
+            661, 673, 677, 683, 691, 701, 709, 719, 727, 733,
+            739, 743, 751, 757, 761, 769, 773, 787, 797, 809,
+            811, 821, 823, 827, 829, 839, 853, 857, 859, 863,
+            877, 881, 883, 887, 907, 911, 919, 929, 937, 941,
+            947, 953, 967, 971, 977, 983, 991, 997,
+    };
+
+    /**
+     * Provides division by a set of small prime numbers.
+     *
+     * @param n number for testing
+     * @param bound limit value
+     * @return <code>true</code> if was divided, <code>false</code> otherwise
+     */
+    private static boolean isDivisibleByPrimes(final BigInteger n, int bound) {
+        for (int i = 0; i < PRIMES.length && PRIMES[i] <= bound; i++) {
+            if (n.mod(BigInteger.valueOf(PRIMES[i])).equals(ZERO)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Generates big prime number by Maurer’s algorithm.
      *
      * @param k number of bits in generated prime number
      * @return prime number
-     * @see <a href="http://en.wikipedia.org/wiki/Carmichael_number">Carmichael number</a>
-     * @see <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.89.4426&rep=rep1&type=pdf"/>
-     * @see <a href="http://s13.zetaboards.com/Crypto/topic/7234475/1/"/>
+     * @see "Handbook of Applied Cryptography" – A. Menezes, P van Oorschot.; 4.62 Algorithm; p.153
      */
     public static BigInteger Maurer(final int k) {
-        Random rand = new Random();
-
         if (k < 20) {
+            // Maurer algorithm for small numbers
+            int n;
 
-            while (true) {
-                int n = rand.nextInt(k);
+            do {
+                n = Chaos.getInstance().random.nextInt((int)Math.pow(2, k));
 
-                if (n % 2 == 0 || n < 3) {
-                    continue;
-                }
+            } while (!PrimeTest.primality(n));
 
-                final double sqrt = Math.sqrt(n);
-
-                for (int p : ptab) {
-                    if (p > sqrt) {
-                        return BigInteger.valueOf(n);
-                    }
-
-                    if (n % p == 0) {
-                        break;
-                    }
-                }
-            }
-        } else {
-            /*
-             We use c=0.005 which has been experimentally found to be optimal in processing
-             time for common PC under MS Windows and values of k of practical interest.
-             A different c value may be desirable for use in different computing
-             environments.
-             */
-
-            double c = 0.1;
-//            double c = 0.005;
-            double r = 0.5;
-            int m = 20;
-
-            double B = c * k * k;
-
-            if (k > 2*m) {
-
-                while (true) {
-                    double s = Math.random();
-
-                    r = Math.pow(2, s - 1);
-
-                    if (k - k * r > m) {
-                        break;
-                    }
-                }
-            }
-
-            BigInteger q = Maurer(Double.valueOf(r * k).intValue());
-            BigInteger I = BigInteger.valueOf(2 ^ (k - 1)).divide(q.multiply(TWO));
-            boolean success = false;
-            BigInteger rBigInt, nBigInt = BigInteger.ZERO;
-
-            while (success == false) {
-                rBigInt = generateRandomBigInt(I.add(BigInteger.ONE), I.multiply(TWO));
-                nBigInt = TWO.multiply(rBigInt).multiply(q).add(BigInteger.ONE);
-
-                success = true;
-
-                for (int p : ptab) {
-                    if (p > B) {
-                        break;
-                    }
-
-                    if (nBigInt.remainder(BigInteger.valueOf(p)).equals(BigInteger.ZERO)) {
-                        success = false;
-                        break;
-                    }
-                }
-
-                if (!success) {
-                    continue;
-                }
-
-                int a = generateRandomIntInRange(2, nBigInt.subtract(TWO));
-
-                BigInteger b = BigInteger.valueOf(a).modPow(nBigInt.subtract(BigInteger.ONE), nBigInt);
-
-                if (b.equals(BigInteger.ONE)) {
-                    b = TWO.modPow(TWO.multiply(rBigInt), nBigInt);
-                    if (nBigInt.gcd(b.subtract(BigInteger.ONE)).equals(BigInteger.ONE)) {
-                        success = true;
-                    }
-                }
-            }
-
-            return nBigInt;
-        }
-    }
-
-    private static int generateRandomIntInRange(final int low, final BigInteger high) {
-        Random rand = new Random();
-
-        int result = rand.nextInt(Integer.MAX_VALUE);
-
-        while (result < low || BigInteger.valueOf(result).compareTo(high) >= 0) {
-            result = rand.nextInt(Integer.MAX_VALUE);
+            return BigInteger.valueOf(n);
         }
 
-        return result;
-    }
+        // Maurer algorithm for big numbers
 
-    private static BigInteger generateRandomBigInt(final BigInteger low, final BigInteger high) {
-        Random rand = new Random();
+        int m = 20;
+        double c = 0.1;
+        double r = 0.5;
+        int B = (int) (c * k * k);
 
-        BigInteger result = new BigInteger(high.bitLength(), rand);
-        while (result.compareTo(high) >= 0 || result.compareTo(low) <= 0) {
-            result = new BigInteger(high.bitLength(), rand);
+        if (k > 2*m) {
+            double s;
+
+            do {
+                s = Chaos.getInstance().random.nextDouble();
+                r = Math.pow(2, s - 1);
+
+            } while (k - k * r <= m);
         }
-        return result;
+
+        BigInteger q = Maurer((int) Math.floor(r * k) + 1);
+        BigInteger I = TWO.pow(k - 1).divide(TWO.multiply(q));
+        BigInteger R, n, d;
+
+        while (true) {
+            R = Chaos.getInstance().getBigInteger(I.add(ONE), TWO.multiply(I));
+            n = TWO.multiply(R).multiply(q).add(ONE);
+
+            if (isDivisibleByPrimes(n, B)) continue;
+
+            BigInteger a = Chaos.getInstance().getBigInteger(2, n.subtract(TWO));
+            BigInteger b = a.modPow(n.subtract(ONE), n);
+
+            if (b.equals(ONE)) {
+                b = a.modPow(TWO.multiply(R), n);
+                d = n.gcd(b.subtract(ONE));
+
+                if (d.equals(ONE)) break;
+            }
+        }
+
+        return n;
     }
 
 
     /**
      * Generates big prime number by Blum-Micali's algorithm.
      *
-     * @param x0 seed
-     * @param p  odd prime
-     * @param q  prime
+     * @param seed initial seed
+     * @param length length of generated sequence
      * @return
      * @see <a href="http://en.wikipedia.org/wiki/Blum%E2%80%93Micali_algorithm">Blum-Micali algorithm</a>
      */
-    public static BigInteger BlumMicali(final BigInteger x0, final BigInteger p, final BigInteger q) {
+    public static BigInteger BlumMicali(final long seed, final int length) {
+        BigInteger p,q;
+
+        // generate random primes p,q
+        do {
+            p = Maurer(64);
+            q = Maurer(64);
+        } while (p.equals(q));
+
         StringBuilder result = new StringBuilder();
+        BigInteger x = BigInteger.valueOf(seed);
 
-        BigInteger x = q.modPow(x0, p);
-
-        for (int i = 0; i < length * 8; ++i) {
+        for (int i = 0; i < length; i++) {
             x = q.modPow(x, p);
 
-            x = x.compareTo(p.subtract(BigInteger.ONE).divide(TWO)) == -1 ? BigInteger.ONE : BigInteger.ZERO;
-            result.append(x);
+            result.append(x.compareTo(p.subtract(ONE).divide(TWO)) < 0 ? 1 : 0);
         }
 
-        return new BigInteger(result.toString(), radix);
+        return new BigInteger(result.toString(), 2);
     }
 
 
     /**
-     * Generates big prime number by Blum-Micali's algorithm.
+     * Generates big prime number by BBS algorithm.
      *
-     * @param x0 seed
-     * @param p  odd prime
-     * @param q  prime
+     * @param seed initial seed
+     * @param length length of generated sequence
      * @return
      * @see <a href="http://en.wikipedia.org/wiki/Blum_Blum_Shub">Blum Blum Shub algorithm</a>
      */
-    public static BigInteger BBS(final BigInteger x0, final BigInteger p, final BigInteger q) {
+    public static BigInteger BBS(final long seed, final int length) {
+        BigInteger p,q;
 
-        if (!isValidBbsPrime(p) || !isValidBbsPrime(q)) {
-            throw new IllegalArgumentException("Provided P or Q are not quadratic residue");
-        }
+        // generate random primes p and q such that: p mod 3 = 4, q mod 3 = 4
+        do {
+            p = Maurer(64);
+            q = Maurer(64);
+        } while (p.mod(THREE).equals(FOUR) && q.mod(THREE).equals(FOUR));
 
-        BigInteger mod = p.multiply(q);
-        BigInteger exp = TWO;
+
+        final BigInteger mod = p.multiply(q);
 
         StringBuilder result = new StringBuilder();
-        BigInteger x = x0.modPow(exp, mod);
+        BigInteger x = BigInteger.valueOf(seed);
 
-        for (int i = 0; i < length * 8; ++i) {
-            x = x.modPow(exp, mod);
+        for (int i = 0; i < length; i++) {
+            x = x.modPow(TWO, mod);
             result.append(x.mod(TWO));
         }
 
-        return new BigInteger(result.toString(), radix);
-    }
-
-    private static boolean isValidBbsPrime(final BigInteger prime) {
-        BigInteger THREE = new BigInteger("3");
-        BigInteger FOUR = new BigInteger("4");
-
-        return prime.mod(THREE).equals(FOUR);
+        return new BigInteger(result.toString(), 2);
     }
 }

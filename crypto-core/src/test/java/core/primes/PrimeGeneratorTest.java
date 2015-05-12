@@ -2,35 +2,29 @@ package core.primes;
 
 import org.junit.Test;
 
-import java.math.BigInteger;
-
-import static org.junit.Assert.assertTrue;
+import static core.primes.PrimeTestTest.assertPrime;
+import static org.junit.Assert.assertNotNull;
 
 public class PrimeGeneratorTest {
+    private static int seed = Chaos.getInstance().random.nextInt();
 
     @Test
-    public void shouldGenerateLightMaurer() throws Exception {
-        BigInteger maurer = PrimeGenerator.Maurer(19);
-        System.out.println("Maurer prime number generator : " + maurer);
-
-        assertTrue("Generator makes not prime values", PrimeTest.MillerRabin(maurer));
-    }
-
-    @Test
-    public void shouldGenerateComplexMaurer() throws Exception {
-        BigInteger maurer = PrimeGenerator.Maurer(128);
-        System.out.println("Maurer prime number generator : " + maurer);
-
-        assertTrue("Generator makes not prime values", PrimeTest.MillerRabin(maurer));
+    public void shouldGenerateMaurer() throws Exception {
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(256)));
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(128)));
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(64)));
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(32)));
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(16)));
+        assertPrime(PrimeTest.MillerRabin(PrimeGenerator.Maurer(8)));
     }
 
     @Test
     public void shouldGenerateBlumMicali() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertNotNull(PrimeGenerator.BlumMicali(seed, 32));
     }
 
     @Test
     public void shouldGenerateBBS() throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        assertNotNull(PrimeGenerator.BBS(seed, 32));
     }
 }
