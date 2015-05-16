@@ -1,6 +1,5 @@
-package crypto.core.arithmetic;
+package core.arithmetic;
 
-import core.arithmetic.Large;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
