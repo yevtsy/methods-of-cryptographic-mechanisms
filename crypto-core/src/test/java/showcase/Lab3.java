@@ -3,12 +3,13 @@ package showcase;
 import core.Benchmark;
 import core.cryptosystem.ElGamal;
 import core.primes.PrimeGenerator;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.math.BigInteger;
 
 /**
- * Created by yevhen.tsyba on 17.05.2015.
+ * @author yevhen.tsyba
+ * @author vadym
+ * @since 17.05.2015
  */
 public class Lab3 {
     private static final int BITS = 128;
@@ -20,13 +21,12 @@ public class Lab3 {
         double time[] = new double[4];
         final BigInteger prime = PrimeGenerator.Maurer(BITS);
 
-        ElGamal cryptoSystem = new ElGamal();
-        cryptoSystem.generateKeys(prime);
+        ElGamal cryptoSystem = new ElGamal(prime);
 
         final BigInteger plain = BigInteger.valueOf(123456789);
 
         benchmark.start();
-        final ImmutablePair<BigInteger, BigInteger> cipher = cryptoSystem.encrypt(plain);
+        final ElGamal.Ciphertext cipher = cryptoSystem.encrypt(plain);
         time[3] = benchmark.stop();
 
         benchmark.start();
@@ -37,7 +37,7 @@ public class Lab3 {
         System.out.println("Decrypted data: " + decrypted);
 
         benchmark.start();
-        final ImmutablePair<BigInteger, BigInteger> signature = cryptoSystem.makeSignature(message);
+        final ElGamal.Signature signature = cryptoSystem.makeSignature(message);
         time[1] = benchmark.stop();
 
         benchmark.start();

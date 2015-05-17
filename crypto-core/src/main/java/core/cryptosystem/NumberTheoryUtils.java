@@ -5,11 +5,11 @@ import core.primes.Chaos;
 import java.math.BigInteger;
 
 /**
- * Created by yevhen.tsyba on 17.05.2015.
+ * @author yevhen.tsyba
+ * @author vadym
+ * @since 17.05.2015.
  */
 public class NumberTheoryUtils {
-    private static Chaos chaos;
-
     /**
      * Calculates Euler's function
      *
@@ -25,7 +25,7 @@ public class NumberTheoryUtils {
 
         BigInteger result = n;
 
-        for (BigInteger i = BigInteger.valueOf(2); i.multiply(i).compareTo(n) <= 0; i.add(BigInteger.ONE))
+        for (BigInteger i = BigInteger.valueOf(2); i.multiply(i).compareTo(n) <= 0; i = i.add(BigInteger.ONE))
             if (n.remainder(i).equals(BigInteger.ZERO)) {
                 while (n.remainder(i).equals(BigInteger.ZERO))
                     n = n.divide(i);
@@ -47,11 +47,10 @@ public class NumberTheoryUtils {
     public static BigInteger getPrimitiveRoot(BigInteger p) {
         final BigInteger phi = phi(p);
 
-        chaos = new Chaos();
         BigInteger g;
         // g^phi(p) = 1 mod(p) - prime root of p
         do {
-            g = chaos.getBigInteger(BigInteger.ONE, p);
+            g = Chaos.getInstance().getBigInteger(BigInteger.ONE, p);
         } while (!g.modPow(phi, p).equals(BigInteger.ONE));
 
         return g;
