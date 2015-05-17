@@ -20,9 +20,9 @@ public class ElGamalTest {
         elGamal.setPublicKey(publicKey);
 
         final ImmutablePair<BigInteger, BigInteger> actualCipher = elGamal.encrypt(m);
-        final ImmutablePair<BigInteger, BigInteger> expectedCipher = new ImmutablePair<>(BigInteger.valueOf(6), BigInteger.valueOf(9));
 
-        assertTrue(expectedCipher.equals(actualCipher));
+        assertTrue(actualCipher.getLeft().compareTo(publicKey.getLeft()) <= 0);
+        assertTrue(actualCipher.getRight().compareTo(publicKey.getLeft()) <= 0);
     }
 
     @Test
@@ -53,23 +53,23 @@ public class ElGamalTest {
         elGamal.setPublicKey(publicKey);
 
         final ImmutablePair<BigInteger, BigInteger> actualSignature = elGamal.makeSignature(m);
-        final ImmutablePair<BigInteger, BigInteger> expectedSignature = ImmutablePair.of(BigInteger.valueOf(20), BigInteger.valueOf(21));
 
-        assertTrue(expectedSignature.equals(actualSignature));
+        assertTrue(actualSignature.getLeft().compareTo(publicKey.getLeft()) <= 0);
+        assertTrue(actualSignature.getRight().compareTo(publicKey.getLeft()) <= 0);
     }
 
     @Test
     public void testSimpleSignatureVerification() throws Exception {
         String m = "baaqab";
         BigInteger privateKey = BigInteger.valueOf(7);
-        ImmutableTriple<BigInteger, BigInteger, BigInteger> publicKey = new ImmutableTriple<>(BigInteger.valueOf(11),
-                BigInteger.valueOf(2), BigInteger.valueOf(3));
+        ImmutableTriple<BigInteger, BigInteger, BigInteger> publicKey = new ImmutableTriple<>(BigInteger.valueOf(23),
+                BigInteger.valueOf(5), BigInteger.valueOf(17));
 
         ElGamal elGamal = new ElGamal();
         elGamal.setPrivateKey(privateKey);
         elGamal.setPublicKey(publicKey);
 
-        final boolean actualResult = elGamal.verifySignature(ImmutablePair.of(BigInteger.valueOf(20), BigInteger.valueOf(21)), m);
+        final boolean actualResult = elGamal.verifySignature(ImmutablePair.of(BigInteger.valueOf(14), BigInteger.valueOf(4)), m);
 
         assertTrue(actualResult);
     }

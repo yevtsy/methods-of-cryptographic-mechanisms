@@ -31,7 +31,17 @@ public class Chaos {
 
         do {
             result = new BigInteger(len, random);
-        } while (!(result.compareTo(from) >= 0 && result.compareTo(to) <= 0));
+        } while (!(result.compareTo(from) > 0 && result.compareTo(to) < 0));
+
+        return result;
+    }
+
+    public BigInteger getMutuallyPrimeBigInteger(final BigInteger from, final BigInteger to, final BigInteger mod) {
+        BigInteger result;
+
+        do {
+            result = getBigInteger(from, to);
+        } while (!mod.gcd(result).equals(BigInteger.ONE));
 
         return result;
     }

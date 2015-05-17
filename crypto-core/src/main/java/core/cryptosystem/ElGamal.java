@@ -1,5 +1,6 @@
 package core.cryptosystem;
 
+import core.primes.Chaos;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 
@@ -27,7 +28,15 @@ public class ElGamal {
      * @see <a href="https://ru.wikipedia.org/wiki/Схема_Эль-Гамаля"/>
      */
     public void generateKeys(final BigInteger p) {
-        throw new RuntimeException("not implemented yet");
+        Chaos chaos = new Chaos();
+        final BigInteger g = NumberTheoryUtils.getPrimitiveRoot(p);
+        final BigInteger x = chaos.getBigInteger(BigInteger.ONE, p);
+
+        // y = g^x mod(p)
+        final BigInteger y = g.modPow(x, p);
+
+        privateKey = x;
+        publicKey = ImmutableTriple.of(p, g, y);
     }
 
     /**
@@ -37,7 +46,22 @@ public class ElGamal {
      * @return {a, b} - cipher text
      */
     public ImmutablePair<BigInteger, BigInteger> encrypt(BigInteger m) {
-        throw new RuntimeException("not implemented yet");
+
+        if (publicKey.getLeft().compareTo(m) <= 0) {
+            throw new IllegalArgumentException("Message M should be less than P");
+        }
+
+        Chaos chaos = new Chaos();
+        // choose random k, where 1 < k < p-1
+        BigInteger sessionKey = chaos.getBigInteger(BigInteger.ONE, publicKey.getLeft().subtract(BigInteger.ONE));
+
+        // compute a = g^k mod(p)
+        BigInteger a = publicKey.getMiddle().modPow(sessionKey, publicKey.getLeft());
+
+        // compute b = y^k*M mod(p)
+        BigInteger b = publicKey.getRight().modPow(sessionKey, publicKey.getLeft()).multiply(m).remainder(publicKey.getLeft());
+
+        return ImmutablePair.of(a, b);
     }
 
     /**
@@ -47,7 +71,15 @@ public class ElGamal {
      * @return decrypted data
      */
     public BigInteger decrypt(ImmutablePair<BigInteger, BigInteger> cipher) {
-        throw new RuntimeException("not implemented yet");
+        // M = b*(a^x)^-1 mod(p)
+
+        // compute (a^x)^-1
+        BigInteger inversed = cipher.getLeft().modPow(privateKey, publicKey.getLeft()).modInverse(publicKey.getLeft());
+
+        // compute M = b * inversed mod(p)
+        BigInteger m = cipher.getRight().multiply(inversed).remainder(publicKey.getLeft());
+
+        return m;
     }
 
     /**
@@ -57,7 +89,35 @@ public class ElGamal {
      * @return {r, s} - digital signature
      */
     public ImmutablePair<BigInteger, BigInteger> makeSignature(String m) {
-        throw new RuntimeException("not implemented yet");
+        // choose Object.hashCode as hash function
+
+        //compute m = h(M)
+        BigInteger hashCode = BigInteger.valueOf(m.hashCode());
+        if (hashCode.compareTo(BigInteger.ZERO) < 0) {
+            hashCode = hashCode.negate();
+        }
+
+        // choose random k, where 1 < k < p-1 and GCD(k, p-1) == 1
+        Chaos chaos = new Chaos();
+        final BigInteger module = publicKey.getLeft().subtract(BigInteger.ONE);
+        BigInteger k = chaos.getMutuallyPrimeBigInteger(BigInteger.ONE, module, module);
+
+        // compute r = g^k mod(p)
+        BigInteger r = publicKey.getMiddle().modPow(k, publicKey.getLeft());
+
+        // compute s = (m - xr)k^-1  mod(p-1)
+
+        BigInteger mxr = hashCode.subtract(privateKey.multiply(r)).remainder(module);
+
+        if (mxr.compareTo(BigInteger.ZERO) < 0) {
+            mxr = mxr.add(module);
+        }
+
+        BigInteger inversed = k.modInverse(module);
+
+        BigInteger s = mxr.multiply(inversed).remainder(module);
+
+        return ImmutablePair.of(r, s);
     }
 
     /**
@@ -69,7 +129,35 @@ public class ElGamal {
      * <i>false</i> if verification fails
      */
     public boolean verifySignature(ImmutablePair<BigInteger, BigInteger> signature, String m) {
-        throw new RuntimeException("not implemented yet");
+
+        BigInteger r = signature.getLeft();
+        BigInteger s = signature.getRight();
+
+        // if 0 < r < p  or 0 < s < p-1  are false -> verification fails
+
+        if (r.compareTo(BigInteger.ZERO) <= 0 || r.compareTo(publicKey.getLeft()) >= 0) {
+            return false;
+        }
+
+        if (s.compareTo(BigInteger.ZERO) <= 0 || s.compareTo(publicKey.getLeft()) >= 0) {
+            return false;
+        }
+
+        // compute m = h(M)
+        BigInteger hashCode = BigInteger.valueOf(m.hashCode());
+        if (hashCode.compareTo(BigInteger.ZERO) < 0) {
+            hashCode = hashCode.negate();
+        }
+
+        // verification is success in case y^r * r^s = g^m mod(p)
+
+        final BigInteger leftSide = publicKey.getRight().modPow(r, publicKey.getLeft())
+                .multiply(r.modPow(s, publicKey.getLeft()))
+                .remainder(publicKey.getLeft());
+
+        final BigInteger rightSide = publicKey.getMiddle().modPow(hashCode, publicKey.getLeft());
+
+        return leftSide.equals(rightSide);
     }
 
     public void showElGamalParams() {
