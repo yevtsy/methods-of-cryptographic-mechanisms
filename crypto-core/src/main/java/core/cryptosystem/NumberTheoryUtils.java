@@ -9,6 +9,7 @@ import java.math.BigInteger;
  * @author vadym
  * @since 17.05.2015.
  */
+@Deprecated
 public class NumberTheoryUtils {
     /**
      * Calculates Euler's function

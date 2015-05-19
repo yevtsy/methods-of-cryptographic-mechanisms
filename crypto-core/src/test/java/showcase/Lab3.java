@@ -12,44 +12,53 @@ import java.math.BigInteger;
  * @since 17.05.2015
  */
 public class Lab3 {
-    private static final int BITS = 128;
+    private static ElGamal elGamal;
     private static Benchmark benchmark = new Benchmark();
-    private static String message = "we don't need no education";
 
 
     public static void main(String[] args) {
-        double time[] = new double[4];
-        final BigInteger prime = PrimeGenerator.Maurer(BITS);
-
-        ElGamal cryptoSystem = new ElGamal(prime);
-
+        final BigInteger prime = PrimeGenerator.Maurer(128);
         final BigInteger plain = BigInteger.valueOf(123456789);
+        String message = "we don't need no education";
+        boolean verify;
 
         benchmark.start();
-        final ElGamal.Ciphertext cipher = cryptoSystem.encrypt(plain);
-        time[3] = benchmark.stop();
+        elGamal = new ElGamal(prime);
+        benchmark.stop();
+        System.out.println("Key generation: " + benchmark.getTime());
+        System.out.println("\tp = " + prime);
+        System.out.println("\tpublic key = " + elGamal.getPublicKey());
+        System.out.println("\tprivate key = " + elGamal.getPublicKey());
 
         benchmark.start();
-        final BigInteger decrypted = cryptoSystem.decrypt(cipher);
-        time[2] = benchmark.stop();
-
-        System.out.println("Plain data: " + plain);
-        System.out.println("Decrypted data: " + decrypted);
-
-        benchmark.start();
-        final ElGamal.Signature signature = cryptoSystem.makeSignature(message);
-        time[1] = benchmark.stop();
+        final ElGamal.Ciphertext cipher = elGamal.encrypt(plain);
+        benchmark.stop();
+        System.out.println("Encryption: " + benchmark.getTime());
+        System.out.println("\tE("+ plain + ") = " + cipher);
 
         benchmark.start();
-        final boolean verificationResult = cryptoSystem.verifySignature(signature, message);
-        time[0] = benchmark.stop();
+        final BigInteger decrypted = elGamal.decrypt(cipher);
+        benchmark.stop();
+        System.out.println("Decryption: " + benchmark.getTime());
+        System.out.println("\tD("+ cipher + ") = " + decrypted);
 
-        System.out.println(String.format("%s\t %f\t%s | %f\t%s | %f\t%s | %f\t%s |",
-                prime,
-                time[3], "cryptoSystem.encrypt",
-                time[2], "cryptoSystem.decrypt",
-                time[1], "cryptoSystem.makeSignature",
-                time[0], "cryptoSystem.verifySignature = " + verificationResult
-        ));
+        benchmark.start();
+        final ElGamal.Signature signature = elGamal.sign(message);
+        benchmark.stop();
+        System.out.println("Sign: " + benchmark.getTime());
+        System.out.println("\tS(\""+ message + "\") = " + signature);
+
+        benchmark.start();
+        verify = elGamal.verify(signature, message);
+        benchmark.stop();
+        System.out.println("Verify: " + benchmark.getTime());
+        System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);
+
+        message = message.toUpperCase();
+        benchmark.start();
+        verify = elGamal.verify(signature, message);
+        benchmark.stop();
+        System.out.println("Verify: " + benchmark.getTime());
+        System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);
     }
 }
