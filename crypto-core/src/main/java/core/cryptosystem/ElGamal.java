@@ -18,7 +18,7 @@ import static java.math.BigInteger.ONE;
 public class ElGamal {
     /**
      * Class for storing El-Gamal's public key.
-     * Public key is the triple of (<i>p</i>, <i>g</i>, <i>y</i>), where:
+     * Public key is a triple of (<i>p</i>, <i>g</i>, <i>y</i>), where:
      * <ul>
      *      <li><i>p</i> - is a large random prime</li>
      *      <li><i>g</i> - is a primitive root of <i>p</i></li>
@@ -51,7 +51,7 @@ public class ElGamal {
 
     /**
      * Class for storing El-Gamal's private key.
-     * Private key is the single <i>x</i>.
+     * Private key is <i>x</i>.
      *
      * @see #ElGamal(PublicKey, PrivateKey)
      * @see #generateKeys(BigInteger)
@@ -168,7 +168,7 @@ public class ElGamal {
     }
 
     /**
-     * Generate private and public keys to El-Gamal cryptosystem.
+     * Generates private and public keys for El-Gamal cryptosystem.
      * The <b>public key</b> is the triple of (<i>p</i>, <i>g</i>, <i>y</i>), and the
      * <b>private key</b> is <i>x</i>.
      *
@@ -193,7 +193,7 @@ public class ElGamal {
 
     
     /**
-     * Encrypt message using generated keys
+     * Encrypts message using generated keys
      *
      * @param m message (plaintext), the number less than <i>p</i>
      * @return ciphertext <i>(a,b)</i>
@@ -220,10 +220,10 @@ public class ElGamal {
 
 
     /**
-     * Decrypt ciphertext using generated keys
+     * Decrypts ciphertext using generated keys
      *
      * @param c ciphertext <i>(a,b)</i>
-     * @return decrypted message
+     * @return decrypted message <i>m</i>
      */
     public BigInteger decrypt(final Ciphertext c) {
         if (publicKey == null) throw new NullPointerException("Public key is not set");
@@ -254,7 +254,7 @@ public class ElGamal {
         //compute m = hash(M)
         final BigInteger hashCode = HASH(m);
 
-        // choose random k, where 1 < k < p-1 and GCD(k, p-1) == 1
+        // choose random k, such that 1 < k < p-1 and k is relative prime to p-1
         final BigInteger module = publicKey.p.subtract(ONE);
         BigInteger k = Chaos.getInstance().getMutuallyPrimeBigInteger(ONE, module, module);
 
