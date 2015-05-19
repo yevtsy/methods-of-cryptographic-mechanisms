@@ -17,7 +17,6 @@ public class Lab2 {
 
     public static void main(String[] args) {
         BigInteger p;
-        double time[] = new double[4];
         boolean isPrimes[] = new boolean[3];
 
         while (true) {
@@ -25,26 +24,25 @@ public class Lab2 {
             p = PrimeGenerator.Maurer(BITS);
 //            p = PrimeGenerator.BlumMicali(0xcafebabe, BITS);
 //            p = PrimeGenerator.BBS(0xcafebabe, BITS);
-            time[3] = benchmark.stop();
+            benchmark.stop("generator");
 
             benchmark.start();
             isPrimes[0] = PrimeTest.Fermat(p, rounds);
-            time[0] = benchmark.stop();
+            benchmark.stop("Fermat");
 
             benchmark.start();
             isPrimes[1] = PrimeTest.SolovayStrassen(p, rounds);
-            time[1] = benchmark.stop();
+            benchmark.stop("SolovayStrassen");
 
             benchmark.start();
             isPrimes[2] = PrimeTest.MillerRabin(p, rounds);
-            time[2] = benchmark.stop();
+            benchmark.stop("MillerRabin");
 
-            System.out.println(String.format("%s\t %f\t | %f\t%s | %f\t%s | %f\t%s |",
-                    p,
-                    time[3],
-                    time[0], isPrimes[0],
-                    time[1], isPrimes[1],
-                    time[2], isPrimes[2]
+            System.out.println(String.format("%40s    %8.3fms  |  %8.3fms  %s  |  %8.3fms  %s  |  %8.3fms  %s",
+                    p, benchmark.getTime("generator"),
+                    benchmark.getTime("Fermat"), isPrimes[0],
+                    benchmark.getTime("SolovayStrassen"), isPrimes[1],
+                    benchmark.getTime("MillerRabin"), isPrimes[2]
             ));
         }
     }
