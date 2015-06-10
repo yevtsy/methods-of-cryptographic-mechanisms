@@ -2,7 +2,7 @@ package showcase;
 
 import core.Benchmark;
 import core.cryptosystem.BlindRSA;
-import core.cryptosystem.ElGamal;
+import core.cryptosystem.ElGamalImpl;
 import core.primes.PrimeGenerator;
 
 import java.math.BigInteger;
@@ -13,9 +13,10 @@ import java.math.BigInteger;
  * @since 17.05.2015
  */
 public class Lab3 {
-    private static ElGamal elGamal;
+    private static ElGamalImpl elGamalImpl;
     private static BlindRSA rsa;
     private static Benchmark benchmark = new Benchmark();
+    private static String algorithm = "ElGamal";
 
 
     public static void main(String[] args) {
@@ -30,40 +31,40 @@ public class Lab3 {
         boolean verify;
 
         benchmark.start();
-        elGamal = new ElGamal(prime);
+        elGamalImpl = new ElGamalImpl(prime);
         benchmark.stop();
         System.out.println("Key generation: " + benchmark.getTime());
         System.out.println("\tp = " + prime);
-        System.out.println("\tpublic key = " + elGamal.getPublicKey());
-        System.out.println("\tprivate key = " + elGamal.getPublicKey());
+        System.out.println("\tpublic key = " + elGamalImpl.getPublicKey());
+        System.out.println("\tprivate key = " + elGamalImpl.getPublicKey());
 
         benchmark.start();
-        final ElGamal.Ciphertext cipher = elGamal.encrypt(plain);
+        final ElGamalImpl.Ciphertext cipher = elGamalImpl.encrypt(algorithm, plain);
         benchmark.stop();
         System.out.println("Encryption: " + benchmark.getTime());
         System.out.println("\tE("+ plain + ") = " + cipher);
 
         benchmark.start();
-        final BigInteger decrypted = elGamal.decrypt(cipher);
+        final BigInteger decrypted = elGamalImpl.decrypt(algorithm, cipher);
         benchmark.stop();
         System.out.println("Decryption: " + benchmark.getTime());
         System.out.println("\tD("+ cipher + ") = " + decrypted);
 
         benchmark.start();
-        final ElGamal.Signature signature = elGamal.sign(message);
+        final ElGamalImpl.Signature signature = elGamalImpl.sign(algorithm, message);
         benchmark.stop();
         System.out.println("Sign: " + benchmark.getTime());
         System.out.println("\tS(\""+ message + "\") = " + signature);
 
         benchmark.start();
-        verify = elGamal.verify(signature, message);
+        verify = elGamalImpl.verify(algorithm, signature, message);
         benchmark.stop();
         System.out.println("Verify: " + benchmark.getTime());
         System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);
 
         message = message.toUpperCase();
         benchmark.start();
-        verify = elGamal.verify(signature, message);
+        verify = elGamalImpl.verify(algorithm, signature, message);
         benchmark.stop();
         System.out.println("Verify: " + benchmark.getTime());
         System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);

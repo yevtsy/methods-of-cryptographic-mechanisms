@@ -132,7 +132,7 @@ public class RSA {
      * @param bits key's length
      */
     public void generateKeys(int bits) {
-        final BigInteger p = PrimeGenerator.Maurer(bits);
+        final BigInteger p = PrimeGenerator.Maurer(bits) ;
         final BigInteger q = PrimeGenerator.Maurer(bits);
         final BigInteger n = p.multiply(q);
 
