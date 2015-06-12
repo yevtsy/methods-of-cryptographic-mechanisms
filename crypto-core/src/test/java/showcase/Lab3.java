@@ -2,7 +2,9 @@ package showcase;
 
 import core.Benchmark;
 import core.cryptosystem.BlindRSA;
-import core.cryptosystem.ElGamalImpl;
+import core.cryptosystem.ElGamal;
+import core.pkcs.Token;
+import core.primes.Chaos;
 import core.primes.PrimeGenerator;
 
 import java.math.BigInteger;
@@ -13,58 +15,61 @@ import java.math.BigInteger;
  * @since 17.05.2015
  */
 public class Lab3 {
-    private static ElGamalImpl elGamalImpl;
+    private static ElGamal elGamal;
     private static BlindRSA rsa;
     private static Benchmark benchmark = new Benchmark();
-    private static String algorithm = "ElGamal";
+    private static Token.Mechanism algorithm = Token.Mechanism.ELGAMAL;
 
 
     public static void main(String[] args) {
-//        ElGamalShowcase();
-        BlindedRSAShowcase();
+        ElGamalShowcase();
+//        BlindedRSAShowcase();
     }
 
     public static void ElGamalShowcase() {
+        final String password = "P@ssw0rd";
+        final BigInteger salt = PrimeGenerator.BlumMicali(Chaos.getInstance().random.nextLong(), 512);
+
         final BigInteger prime = PrimeGenerator.Maurer(128);
         final BigInteger plain = BigInteger.valueOf(123456789);
         String message = "we don't need no education";
         boolean verify;
 
         benchmark.start();
-        elGamalImpl = new ElGamalImpl(prime);
+        elGamal = new ElGamal(prime, password, salt);
         benchmark.stop();
         System.out.println("Key generation: " + benchmark.getTime());
         System.out.println("\tp = " + prime);
-        System.out.println("\tpublic key = " + elGamalImpl.getPublicKey());
-        System.out.println("\tprivate key = " + elGamalImpl.getPublicKey());
+        System.out.println("\tpublic key = " + elGamal.getPublicKey());
+        System.out.println("\tprivate key = " + elGamal.getPublicKey());
 
         benchmark.start();
-        final ElGamalImpl.Ciphertext cipher = elGamalImpl.encrypt(algorithm, plain);
+        final ElGamal.Ciphertext cipher = elGamal.encrypt(algorithm, plain);
         benchmark.stop();
         System.out.println("Encryption: " + benchmark.getTime());
         System.out.println("\tE("+ plain + ") = " + cipher);
 
         benchmark.start();
-        final BigInteger decrypted = elGamalImpl.decrypt(algorithm, cipher);
+        final BigInteger decrypted = elGamal.decrypt(algorithm, cipher, password, salt);
         benchmark.stop();
         System.out.println("Decryption: " + benchmark.getTime());
         System.out.println("\tD("+ cipher + ") = " + decrypted);
 
         benchmark.start();
-        final ElGamalImpl.Signature signature = elGamalImpl.sign(algorithm, message);
+        final ElGamal.Signature signature = elGamal.sign(algorithm, message, password, salt);
         benchmark.stop();
         System.out.println("Sign: " + benchmark.getTime());
         System.out.println("\tS(\""+ message + "\") = " + signature);
 
         benchmark.start();
-        verify = elGamalImpl.verify(algorithm, signature, message);
+        verify = elGamal.verify(algorithm, signature, message);
         benchmark.stop();
         System.out.println("Verify: " + benchmark.getTime());
         System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);
 
         message = message.toUpperCase();
         benchmark.start();
-        verify = elGamalImpl.verify(algorithm, signature, message);
+        verify = elGamal.verify(algorithm, signature, message);
         benchmark.stop();
         System.out.println("Verify: " + benchmark.getTime());
         System.out.println("\tV("+ signature + ", \"" + message + "\") = " + verify);

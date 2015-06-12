@@ -1,5 +1,9 @@
 package core.cryptosystem;
 
+import core.pkcs.Keys;
+import core.pkcs.Token;
+import core.primes.Chaos;
+import core.primes.PrimeGenerator;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -8,23 +12,23 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class ElGamalImplTest {
-    private String algorithm = "ElGamal";
+public class ElGamalTest {
+    private Token.Mechanism algorithm = Token.Mechanism.ELGAMAL;
+    private String password = "P@ssw0rd";
+    private BigInteger salt = PrimeGenerator.BlumMicali(Chaos.getInstance().random.nextLong(), 512);
 
     @Test
     public void shouldEncrypt() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(
-                new ElGamalImpl.PublicKey(
+        final ElGamal elGamal = new ElGamal(
+                new ElGamal.PublicKey(
                         BigInteger.valueOf(11),     // p = 11
                         BigInteger.valueOf(2),      // g = 2
                         BigInteger.valueOf(3)       // y = 3
                 ),
-                new ElGamalImpl.PrivateKey(
-                        BigInteger.valueOf(8)       // x = 8
-                )
+                Keys.encrypt(new Keys.PrivateKey(BigInteger.valueOf(8)), password, salt)  // x = 8
         );
 
-        final ElGamalImpl.Ciphertext ciphertext = elGamalImpl.encrypt(algorithm, BigInteger.valueOf(5));
+        final ElGamal.Ciphertext ciphertext = elGamal.encrypt(algorithm, BigInteger.valueOf(5));
 
         assertTrue(ciphertext.a.compareTo(BigInteger.valueOf(11)) <= 0);
         assertTrue(ciphertext.b.compareTo(BigInteger.valueOf(11)) <= 0);
@@ -33,23 +37,21 @@ public class ElGamalImplTest {
 
     @Test
     public void shouldDecrypt() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(
-                new ElGamalImpl.PublicKey(
+        final ElGamal elGamal = new ElGamal(
+                new ElGamal.PublicKey(
                         BigInteger.valueOf(11),     // p = 11
                         BigInteger.valueOf(2),      // g = 2
                         BigInteger.valueOf(3)       // y = 3
                 ),
-                new ElGamalImpl.PrivateKey(
-                        BigInteger.valueOf(8)       // x = 8
-                )
+                Keys.encrypt(new Keys.PrivateKey(BigInteger.valueOf(8)), password, salt)  // x = 8
         );
 
-        final ElGamalImpl.Ciphertext ciphertext = new ElGamalImpl.Ciphertext(
+        final ElGamal.Ciphertext ciphertext = new ElGamal.Ciphertext(
                 BigInteger.valueOf(6),              // a = 6
                 BigInteger.valueOf(9)               // b = 9
         );
 
-        final BigInteger actualM = elGamalImpl.decrypt(algorithm, ciphertext);
+        final BigInteger actualM = elGamal.decrypt(algorithm, ciphertext, password, salt);
 
         assertEquals(BigInteger.valueOf(5), actualM);
     }
@@ -57,11 +59,11 @@ public class ElGamalImplTest {
 
     @Test
     public void shouldEncryptAndDecrypt() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(BigInteger.valueOf(11));
+        final ElGamal elGamal = new ElGamal(BigInteger.valueOf(11), password, salt);
 
         final BigInteger expected = BigInteger.valueOf(5);
-        final ElGamalImpl.Ciphertext ciphertext = elGamalImpl.encrypt(algorithm, expected);
-        final BigInteger actual = elGamalImpl.decrypt(algorithm, ciphertext);
+        final ElGamal.Ciphertext ciphertext = elGamal.encrypt(algorithm, expected);
+        final BigInteger actual = elGamal.decrypt(algorithm, ciphertext, password, salt);
 
         assertEquals(expected, actual);
     }
@@ -69,18 +71,16 @@ public class ElGamalImplTest {
 
     @Test
     public void shouldSign() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(
-                new ElGamalImpl.PublicKey(
+        final ElGamal elGamal = new ElGamal(
+                new ElGamal.PublicKey(
                         BigInteger.valueOf(23),     // p = 23
                         BigInteger.valueOf(5),      // g = 5
                         BigInteger.valueOf(17)      // y = 17
                 ),
-                new ElGamalImpl.PrivateKey(
-                        BigInteger.valueOf(7)       // x = 7
-                )
+                Keys.encrypt(new Keys.PrivateKey(BigInteger.valueOf(7)), password, salt)  // x = 7
         );
 
-        final ElGamalImpl.Signature actualSignature = elGamalImpl.sign(algorithm, "baaqab");
+        final ElGamal.Signature actualSignature = elGamal.sign(algorithm, "baaqab", password, salt);
 
         assertTrue(actualSignature.r.compareTo(BigInteger.valueOf(23)) <= 0);
         assertTrue(actualSignature.s.compareTo(BigInteger.valueOf(23)) <= 0);
@@ -89,23 +89,21 @@ public class ElGamalImplTest {
 
     @Test
     public void shouldVerify() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(
-                new ElGamalImpl.PublicKey(
+        final ElGamal elGamal = new ElGamal(
+                new ElGamal.PublicKey(
                         BigInteger.valueOf(23),     // p = 23
                         BigInteger.valueOf(5),      // g = 5
                         BigInteger.valueOf(17)      // y = 17
                 ),
-                new ElGamalImpl.PrivateKey(
-                        BigInteger.valueOf(7)       // x = 7
-                )
+                Keys.encrypt(new Keys.PrivateKey(BigInteger.valueOf(7)), password, salt)  // x = 7
         );
 
-        final ElGamalImpl.Signature actualSignature = new ElGamalImpl.Signature(
+        final ElGamal.Signature actualSignature = new ElGamal.Signature(
                 BigInteger.valueOf(14),             // r = 14
                 BigInteger.valueOf(4)               // s = 4
         );
 
-        final boolean actualResult = elGamalImpl.verify(algorithm, actualSignature, "baaqab");
+        final boolean actualResult = elGamal.verify(algorithm, actualSignature, "baaqab");
 
         assertTrue(actualResult);
     }
@@ -113,15 +111,15 @@ public class ElGamalImplTest {
 
     @Test
     public void shouldSignAndVerify() throws Exception {
-        final ElGamalImpl elGamalImpl = new ElGamalImpl(BigInteger.valueOf(23));
+        final ElGamal elGamal = new ElGamal(BigInteger.valueOf(23), password, salt);
 
         final String message = "baaqab";
-        final ElGamalImpl.Signature signature = elGamalImpl.sign(algorithm, message);
+        final ElGamal.Signature signature = elGamal.sign(algorithm, message, password, salt);
 
-        assertTrue(elGamalImpl.verify(algorithm, signature, message));
-        assertFalse(elGamalImpl.verify(algorithm, signature, "zxcvm"));
+        assertTrue(elGamal.verify(algorithm, signature, message));
+        assertFalse(elGamal.verify(algorithm, signature, "zxcvm"));
 
         signature.r = signature.r.flipBit(3);
-        assertFalse(elGamalImpl.verify(algorithm, signature, message));
+        assertFalse(elGamal.verify(algorithm, signature, message));
     }
 }
